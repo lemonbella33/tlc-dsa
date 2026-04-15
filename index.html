@@ -920,71 +920,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <script>
-        // 🔒 비밀번호 보호 기능
-        (function() {
-            const storedPw = localStorage.getItem('app_password') || "123";
-            const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
-            
-            if (!isAuthenticated) {
-                const userPassword = prompt("🔐 비밀번호를 입력하세요:");
-                
-                if (userPassword !== storedPw) {
-                    document.body.innerHTML = `
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; 
-                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                                    font-family: 'Segoe UI', sans-serif;">
-                            <div style="background: white; padding: 50px; border-radius: 20px; 
-                                        box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;">
-                                <div style="font-size: 80px; margin-bottom: 20px;">🔒</div>
-                                <h1 style="color: #e74c3c; margin-bottom: 15px;">접근 권한이 없습니다</h1>
-                                <p style="color: #7f8c8d; font-size: 18px;">올바른 비밀번호를 입력해주세요.</p>
-                                <button onclick="location.reload()" 
-                                        style="margin-top: 30px; padding: 15px 40px; background: #667eea; 
-                                               color: white; border: none; border-radius: 10px; 
-                                               font-size: 16px; cursor: pointer; font-weight: 600;">
-                                    다시 시도
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    throw new Error("Authentication failed");
-                }
-                
-                sessionStorage.setItem('authenticated', 'true');
-            }
-        })();
-
-        // 비밀번호 변경 접이식
-        function togglePwSection() {
-            const section = document.getElementById('pwSection');
-            const arrow = document.getElementById('pwArrow');
-            const isOpen = section.style.display !== 'none';
-            section.style.display = isOpen ? 'none' : 'block';
-            arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-        }
-
-        function changePassword() {
-            const current = document.getElementById('pwCurrent').value;
-            const newPw = document.getElementById('pwNew').value;
-            const confirm = document.getElementById('pwConfirm').value;
-            const storedPw = localStorage.getItem('app_password') || "123";
-
-            document.getElementById('pwError1').style.display = 'none';
-            document.getElementById('pwError2').style.display = 'none';
-            document.getElementById('pwError3').style.display = 'none';
-            document.getElementById('pwSuccess').style.display = 'none';
-
-            if (!newPw) { document.getElementById('pwError3').style.display = 'block'; return; }
-            if (current !== storedPw) { document.getElementById('pwError1').style.display = 'block'; return; }
-            if (newPw !== confirm) { document.getElementById('pwError2').style.display = 'block'; return; }
-
-            localStorage.setItem('app_password', newPw);
-            document.getElementById('pwCurrent').value = '';
-            document.getElementById('pwNew').value = '';
-            document.getElementById('pwConfirm').value = '';
-            document.getElementById('pwSuccess').style.display = 'block';
-        }
-
         // ===== Supabase 설정 =====
         const SUPABASE_URL = 'https://nzexffbacnevglcklaln.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56ZXhmZmJhY25ldmdsY2tsYWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODgyNjUsImV4cCI6MjA5MTc2NDI2NX0.acsHs1hAp4dNXNvG-d3PtMJYya11L6rXJPr9PXaw2BM';
@@ -1011,7 +946,84 @@
         }
         // ==========================
 
-        let recipients = [];
+        // 🔒 비밀번호 보호 (Supabase 기반)
+        async function initAuth() {
+            const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+            if (isAuthenticated) return true;
+
+            const userPassword = prompt("🔐 비밀번호를 입력하세요:");
+            if (userPassword === null) { showAuthError(); return false; }
+
+            try {
+                const data = await sbFetch('app_config?key=eq.password&select=value');
+                const correctPw = data.length > 0 ? data[0].value : '123';
+                if (userPassword !== correctPw) { showAuthError(); return false; }
+            } catch(e) {
+                if (userPassword !== '123') { showAuthError(); return false; }
+            }
+
+            sessionStorage.setItem('authenticated', 'true');
+            return true;
+        }
+
+        function showAuthError() {
+            document.body.innerHTML = `
+                <div style="display:flex;justify-content:center;align-items:center;height:100vh;
+                            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+                            font-family:'Segoe UI',sans-serif;">
+                    <div style="background:white;padding:50px;border-radius:20px;
+                                box-shadow:0 10px 30px rgba(0,0,0,0.3);text-align:center;">
+                        <div style="font-size:80px;margin-bottom:20px;">🔒</div>
+                        <h1 style="color:#e74c3c;margin-bottom:15px;">접근 권한이 없습니다</h1>
+                        <p style="color:#7f8c8d;font-size:18px;">올바른 비밀번호를 입력해주세요.</p>
+                        <button onclick="location.reload()"
+                                style="margin-top:30px;padding:15px 40px;background:#667eea;
+                                       color:white;border:none;border-radius:10px;
+                                       font-size:16px;cursor:pointer;font-weight:600;">
+                            다시 시도
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        // 비밀번호 변경 (Supabase 저장)
+        function togglePwSection() {
+            const section = document.getElementById('pwSection');
+            const arrow = document.getElementById('pwArrow');
+            const isOpen = section.style.display !== 'none';
+            section.style.display = isOpen ? 'none' : 'block';
+            arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('pwCurrent').value;
+            const newPw = document.getElementById('pwNew').value;
+            const confirm = document.getElementById('pwConfirm').value;
+
+            ['pwError1','pwError2','pwError3','pwSuccess'].forEach(id =>
+                document.getElementById(id).style.display = 'none');
+
+            if (!newPw) { document.getElementById('pwError3').style.display = 'block'; return; }
+            if (newPw !== confirm) { document.getElementById('pwError2').style.display = 'block'; return; }
+
+            try {
+                const data = await sbFetch('app_config?key=eq.password&select=value');
+                const correctPw = data.length > 0 ? data[0].value : '123';
+                if (current !== correctPw) { document.getElementById('pwError1').style.display = 'block'; return; }
+
+                await sbFetch('app_config?key=eq.password', {
+                    method: 'PATCH',
+                    body: JSON.stringify({ value: newPw })
+                });
+
+                document.getElementById('pwCurrent').value = '';
+                document.getElementById('pwNew').value = '';
+                document.getElementById('pwConfirm').value = '';
+                document.getElementById('pwSuccess').style.display = 'block';
+            } catch(e) {
+                alert('비밀번호 변경에 실패했습니다.');
+            }
+        }
         let dsaPositiveRecipients = [];
         let manualOrder = null; // 수동 순서 오버라이드 (dbId 배열)
         let lastDonorKey = ''; // 기증자 정보 변경 감지용
@@ -1666,8 +1678,11 @@
             document.getElementById(id).addEventListener("input", renderRecipients);
         });
 
-        loadRecipients();
-        loadMemo();
+        initAuth().then(ok => {
+            if (!ok) return;
+            loadRecipients();
+            loadMemo();
+        });
 
         // 메모 관련 함수
         function updateMemoCounter() {
