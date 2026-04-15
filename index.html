@@ -830,6 +830,24 @@
             <div class="success-message" id="successMessage"></div>
         </div>
 
+        <!-- 이력관리 섹션 -->
+        <div class="excel-section" style="margin-top:15px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleSnapshotSection()">
+                <h3 style="margin:0;">📁 목록 이력 관리</h3>
+                <span id="snapshotArrow" style="font-size:18px;transition:transform 0.3s;">▼</span>
+            </div>
+            <div id="snapshotSection" style="display:none;margin-top:18px;">
+                <div style="display:flex;gap:10px;margin-bottom:15px;align-items:center;">
+                    <input type="text" id="snapshotName" placeholder="이력 이름 입력 (예: 2026-04-15 Donor A)" 
+                        style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
+                    <button class="btn btn-primary" onclick="saveSnapshot()" style="white-space:nowrap;">💾 현재 목록 저장</button>
+                </div>
+                <div id="snapshotList" style="display:flex;flex-direction:column;gap:10px;">
+                    <div style="color:#999;text-align:center;padding:20px;">저장된 이력이 없습니다.</div>
+                </div>
+            </div>
+        </div>
+
         <!-- 비밀번호 변경 접이식 섹션 -->
         <div class="excel-section" style="margin-top:15px;">
             <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="togglePwSection()">
@@ -848,6 +866,17 @@
                     <button class="btn btn-primary" onclick="changePassword()" style="width:100%;">변경</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 이력 상세보기 모달 -->
+    <div id="snapshotModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#4472c4;">
+                <span id="snapshotModalTitle">📋 이력 상세보기</span>
+                <button class="close-btn" onclick="closeSnapshotModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="snapshotModalBody"></div>
         </div>
     </div>
 
@@ -984,6 +1013,20 @@
 
         let recipients = [];
         let dsaPositiveRecipients = [];
+        let manualOrder = null; // 수동 순서 오버라이드 (dbId 배열)
+        let lastDonorKey = ''; // 기증자 정보 변경 감지용
+
+        // 기증자 정보 키 생성
+        function getDonorKey() {
+            const g = document.querySelector("input[name='donorGender']:checked").value;
+            const h = document.getElementById("donorHeight").value;
+            const b = document.getElementById("donorBloodType").value;
+            const a = document.getElementById("donorHLA_A").value;
+            const hb = document.getElementById("donorHLA_B").value;
+            const dr = document.getElementById("donorHLA_DR").value;
+            const dq = document.getElementById("donorHLA_DQ").value;
+            return `${g}|${h}|${b}|${a}|${hb}|${dr}|${dq}`;
+        }
 
         // Supabase에서 수혜자 목록 불러오기
         async function loadRecipients() {
@@ -1181,60 +1224,68 @@
 
             document.getElementById("donorTLC").textContent = formatNumber(donorTLC, 1);
 
+            // 기증자 정보 변경 감지 → 변경되면 수동 순서 초기화
+            const currentDonorKey = getDonorKey();
+            if (currentDonorKey !== lastDonorKey) {
+                lastDonorKey = currentDonorKey;
+                manualOrder = null; // 자동 정렬 모드로 복귀
+            }
+
             dsaPositiveRecipients = [];
 
             const recipientsWithCompatibility = recipients.map((recipient, originalIndex) => {
                 const recipientTLC = calculateTLC(recipient.height, recipient.gender);
                 const ratio = donorTLC > 0 && recipientTLC > 0 ? donorTLC / recipientTLC : 0;
-                const ratioOk = ratio >= 0.7 && ratio <= 1.3;
                 const bloodOk = isBloodCompatible(donorBloodType, recipient.bloodType);
-                const isCompatible = ratioOk && bloodOk;
-
                 const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
                 const hasDSA = dsaMatches.length > 0;
 
                 if (hasDSA) {
-                    dsaPositiveRecipients.push({
-                        recipient: recipient,
-                        matches: dsaMatches,
-                        recipientTLC: recipientTLC,
-                        ratio: ratio
-                    });
+                    dsaPositiveRecipients.push({ recipient, matches: dsaMatches, recipientTLC, ratio });
                 }
 
-                return {
-                    ...recipient,
-                    recipientTLC,
-                    ratio,
-                    ratioOk,
-                    bloodOk,
-                    isCompatible,
-                    hasDSA,
-                    dsaMatches,
-                    originalIndex
-                };
+                return { ...recipient, recipientTLC, ratio, bloodOk, hasDSA, dsaMatches, originalIndex };
             });
 
+            let ordered;
+            if (manualOrder) {
+                // 수동 순서 적용
+                const map = new Map(recipientsWithCompatibility.map(r => [r.dbId, r]));
+                ordered = manualOrder.map(id => map.get(id)).filter(Boolean);
+                // manualOrder에 없는 항목은 뒤에 추가
+                recipientsWithCompatibility.forEach(r => {
+                    if (!manualOrder.includes(r.dbId)) ordered.push(r);
+                });
+            } else {
+                // 자동 그룹 정렬: DSA빨강 → 혈액형맞음초록 → 불일치회색
+                const dsaGroup = recipientsWithCompatibility.filter(r => r.hasDSA && r.bloodOk);
+                const compatGroup = recipientsWithCompatibility.filter(r => !r.hasDSA && r.bloodOk);
+                const incompatGroup = recipientsWithCompatibility.filter(r => !r.bloodOk);
+                ordered = [...dsaGroup, ...compatGroup, ...incompatGroup];
+            }
 
-
-            // recipients 원본 순서 유지, 색상만 구분
-            recipientsWithCompatibility.forEach(recipient => {
-                const row = createRecipientRow(recipient, recipient.bloodOk, recipient.hasDSA);
+            ordered.forEach(recipient => {
+                const row = createRecipientRow(recipient, recipient.bloodOk, recipient.hasDSA, ordered);
                 tableBody.appendChild(row);
             });
+            window._currentOrdered = ordered;
         }
 
-        // 순서 조정: recipients 배열에서 직접 위/아래 이동
-        function moveRecipient(dbId, direction) {
-            const idx = recipients.findIndex(r => r.dbId === dbId);
+        // 순서 조정: manualOrder 배열로 관리
+        function moveRecipient(dbId, direction, currentOrdered) {
+            // 현재 표시 순서 기준으로 manualOrder 초기화
+            if (!manualOrder) {
+                manualOrder = currentOrdered.map(r => r.dbId);
+            }
+            const idx = manualOrder.indexOf(dbId);
             if (idx === -1) return;
             const swapIdx = idx + direction;
-            if (swapIdx < 0 || swapIdx >= recipients.length) return;
-            [recipients[idx], recipients[swapIdx]] = [recipients[swapIdx], recipients[idx]];
+            if (swapIdx < 0 || swapIdx >= manualOrder.length) return;
+            [manualOrder[idx], manualOrder[swapIdx]] = [manualOrder[swapIdx], manualOrder[idx]];
             renderRecipients();
         }
 
-        function createRecipientRow(recipient, isBloodCompatible, hasDSA, totalCount, currentDisplayIndex) {
+        function createRecipientRow(recipient, isBloodCompatible, hasDSA, ordered) {
             const row = document.createElement("tr");
             
             if (hasDSA) {
@@ -1245,14 +1296,16 @@
                 row.className = "blood-incompatible-row";
             }
 
-            // 순서 버튼 (맨 오른쪽)
-            const recipientIdx = recipients.findIndex(r => r.dbId === recipient.dbId);
-            const upDisabled = recipientIdx === 0 ? 'disabled' : '';
-            const downDisabled = recipientIdx === recipients.length - 1 ? 'disabled' : '';
+            // 순서 버튼 - ordered 배열 기준
+            const orderedIds = ordered ? ordered.map(r => r.dbId) : [];
+            const currentIdx = orderedIds.indexOf(recipient.dbId);
+            const upDisabled = currentIdx <= 0 ? 'disabled' : '';
+            const downDisabled = currentIdx >= orderedIds.length - 1 ? 'disabled' : '';
+            const orderedJson = JSON.stringify(orderedIds).replace(/"/g, '&quot;');
             const orderCell = `
                 <td class="order-cell">
-                    <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',-1)" ${upDisabled}>▲</button>
-                    <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',1)" ${downDisabled}>▼</button>
+                    <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',-1,window._currentOrdered)" ${upDisabled}>▲</button>
+                    <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',1,window._currentOrdered)" ${downDisabled}>▼</button>
                 </td>`;
 
             // DSA 인라인 표시 - 클릭 시 PRA 팝업 (버튼 없애고 항목 자체 클릭)
@@ -1528,9 +1581,11 @@
             const modal1 = document.getElementById('dsaModal');
             const modal2 = document.getElementById('dsaDetailModal');
             const modal3 = document.getElementById('praModal');
+            const modal4 = document.getElementById('snapshotModal');
             if (event.target === modal1) closeDSAModal();
             if (event.target === modal2) closeDSADetailModal();
             if (event.target === modal3) closePraModal();
+            if (event.target === modal4) closeSnapshotModal();
         }
 
         function downloadTemplate() {
@@ -1632,6 +1687,165 @@
             // 메모 자동 저장 (서버)
             saveMemo();
         }
+
+        // ===== 이력관리 =====
+        let snapshots = [];
+
+        function toggleSnapshotSection() {
+            const section = document.getElementById('snapshotSection');
+            const arrow = document.getElementById('snapshotArrow');
+            const isOpen = section.style.display !== 'none';
+            section.style.display = isOpen ? 'none' : 'block';
+            arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+            if (!isOpen) loadSnapshots();
+        }
+
+        async function saveSnapshot() {
+            const name = document.getElementById('snapshotName').value.trim();
+            if (!name) { alert('이력 이름을 입력해주세요.'); return; }
+
+            const data = {
+                recipients: recipients.map(r => ({
+                    id: r.id, gender: r.gender, height: r.height,
+                    bloodType: r.bloodType, praAntibodies: r.praAntibodies
+                })),
+                savedAt: new Date().toISOString()
+            };
+
+            try {
+                await sbFetch('snapshots', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, data })
+                });
+                document.getElementById('snapshotName').value = '';
+                showSuccessMessage('이력이 저장되었습니다.');
+                loadSnapshots();
+            } catch(e) {
+                console.error(e);
+                showSuccessMessage('저장 실패: ' + e.message);
+            }
+        }
+
+        async function loadSnapshots() {
+            try {
+                snapshots = await sbFetch('snapshots?select=*&order=created_at.desc');
+                renderSnapshotList();
+            } catch(e) {
+                console.error('이력 로드 실패:', e);
+            }
+        }
+
+        function renderSnapshotList() {
+            const container = document.getElementById('snapshotList');
+            if (snapshots.length === 0) {
+                container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">저장된 이력이 없습니다.</div>';
+                return;
+            }
+            container.innerHTML = snapshots.map(s => {
+                const date = new Date(s.created_at).toLocaleString('ko-KR');
+                const count = s.data?.recipients?.length || 0;
+                return `
+                <div style="border:1px solid #e0e0e0;border-radius:10px;padding:14px;background:#fafafa;display:flex;align-items:center;gap:10px;">
+                    <div style="flex:1;">
+                        <div id="snapshotNameDisplay_${s.id}" style="font-weight:600;color:#2c3e50;font-size:15px;">${s.name}</div>
+                        <div id="snapshotNameEdit_${s.id}" style="display:none;">
+                            <input type="text" id="snapshotNameInput_${s.id}" value="${s.name}" 
+                                style="padding:6px;border:2px solid #4472c4;border-radius:6px;font-size:14px;width:100%;">
+                        </div>
+                        <div style="color:#999;font-size:12px;margin-top:3px;">${date} · 수혜자 ${count}명</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <button onclick="viewSnapshot('${s.id}')" 
+                            style="padding:5px 10px;background:#4472c4;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">👁 보기</button>
+                        <button onclick="toggleRenameSnapshot('${s.id}')" id="renameBtn_${s.id}"
+                            style="padding:5px 10px;background:#f39c12;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">✏️ 이름</button>
+                        <button onclick="deleteSnapshot('${s.id}')"
+                            style="padding:5px 10px;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">🗑 삭제</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleRenameSnapshot(id) {
+            const display = document.getElementById(`snapshotNameDisplay_${id}`);
+            const edit = document.getElementById(`snapshotNameEdit_${id}`);
+            const btn = document.getElementById(`renameBtn_${id}`);
+            const isEditing = edit.style.display !== 'none';
+            if (isEditing) {
+                // 저장
+                renameSnapshot(id);
+            } else {
+                display.style.display = 'none';
+                edit.style.display = 'block';
+                btn.textContent = '✅ 저장';
+            }
+        }
+
+        async function renameSnapshot(id) {
+            const input = document.getElementById(`snapshotNameInput_${id}`);
+            const newName = input.value.trim();
+            if (!newName) return;
+            try {
+                await sbFetch(`snapshots?id=eq.${id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ name: newName })
+                });
+                loadSnapshots();
+            } catch(e) {
+                console.error('이름 변경 실패:', e);
+            }
+        }
+
+        async function deleteSnapshot(id) {
+            if (!confirm('이 이력을 삭제하시겠습니까?')) return;
+            try {
+                await sbFetch(`snapshots?id=eq.${id}`, { method: 'DELETE' });
+                loadSnapshots();
+            } catch(e) {
+                console.error('삭제 실패:', e);
+            }
+        }
+
+        function viewSnapshot(id) {
+            const s = snapshots.find(s => s.id === id);
+            if (!s) return;
+            const date = new Date(s.created_at).toLocaleString('ko-KR');
+            document.getElementById('snapshotModalTitle').textContent = `📋 ${s.name}`;
+
+            const rows = (s.data?.recipients || []).map((r, i) => `
+                <tr>
+                    <td>${i+1}</td>
+                    <td>${r.id}</td>
+                    <td>${r.gender}</td>
+                    <td>${r.height}</td>
+                    <td>${r.bloodType}</td>
+                    <td style="font-size:11px;text-align:left;max-width:200px;white-space:pre-wrap;">${r.praAntibodies || '-'}</td>
+                </tr>`).join('');
+
+            document.getElementById('snapshotModalBody').innerHTML = `
+                <div style="margin-bottom:15px;padding:12px;background:#e8f4fd;border-radius:8px;color:#2c3e50;">
+                    <strong>저장일시:</strong> ${date} &nbsp;|&nbsp; <strong>수혜자:</strong> ${s.data?.recipients?.length || 0}명
+                </div>
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="background:#4472c4;color:white;">
+                        <th style="padding:8px;">#</th>
+                        <th style="padding:8px;">수혜자 ID</th>
+                        <th style="padding:8px;">성별</th>
+                        <th style="padding:8px;">키</th>
+                        <th style="padding:8px;">혈액형</th>
+                        <th style="padding:8px;">PRA</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                </div>`;
+            document.getElementById('snapshotModal').style.display = 'block';
+        }
+
+        function closeSnapshotModal() {
+            document.getElementById('snapshotModal').style.display = 'none';
+        }
+        // ===== 이력관리 끝 =====
 
         // Supabase에 메모 저장
         async function saveMemo() {
