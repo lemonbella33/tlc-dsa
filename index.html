@@ -1257,9 +1257,9 @@
                     if (!manualOrder.includes(r.dbId)) ordered.push(r);
                 });
             } else {
-                // 자동 그룹 정렬: DSA빨강 → 혈액형맞음초록 → 불일치회색
-                const dsaGroup = recipientsWithCompatibility.filter(r => r.hasDSA && r.bloodOk);
-                const compatGroup = recipientsWithCompatibility.filter(r => !r.hasDSA && r.bloodOk);
+                // 자동 그룹 정렬: 혈액형맞음+DSA빨강 → 혈액형맞음초록 → 혈액형불일치회색(DSA 있어도)
+                const dsaGroup = recipientsWithCompatibility.filter(r => r.bloodOk && r.hasDSA);
+                const compatGroup = recipientsWithCompatibility.filter(r => r.bloodOk && !r.hasDSA);
                 const incompatGroup = recipientsWithCompatibility.filter(r => !r.bloodOk);
                 ordered = [...dsaGroup, ...compatGroup, ...incompatGroup];
             }
@@ -1288,12 +1288,12 @@
         function createRecipientRow(recipient, isBloodCompatible, hasDSA, ordered) {
             const row = document.createElement("tr");
             
-            if (hasDSA) {
-                row.className = "dsa-positive-row";
-            } else if (isBloodCompatible) {
-                row.className = "blood-compatible-row";
-            } else {
+            if (!isBloodCompatible) {
                 row.className = "blood-incompatible-row";
+            } else if (hasDSA) {
+                row.className = "dsa-positive-row";
+            } else {
+                row.className = "blood-compatible-row";
             }
 
             // 순서 버튼 - ordered 배열 기준
@@ -1308,9 +1308,9 @@
                     <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',1,window._currentOrdered)" ${downDisabled}>▼</button>
                 </td>`;
 
-            // DSA 인라인 표시 - 클릭 시 PRA 팝업 (버튼 없애고 항목 자체 클릭)
+            // DSA 인라인 표시 - 혈액형 불일치면 DSA 있어도 표시 안 함
             let dsaCell = '';
-            if (hasDSA) {
+            if (hasDSA && isBloodCompatible) {
                 const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
                 recipient.dsaMatches.forEach(m => {
                     if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody);
