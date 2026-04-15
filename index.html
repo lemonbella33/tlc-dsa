@@ -608,38 +608,25 @@
             font-size: 12px;
         }
 
-        .pra-btn {
-            display: inline-block;
-            margin-top: 4px;
-            padding: 2px 8px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 11px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .pra-btn:hover { background:#c0392b; }
-
         /* 순서 조정 버튼 */
         .order-btn {
             background: none;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 3px;
             cursor: pointer;
-            padding: 1px 6px;
-            font-size: 13px;
+            padding: 0px 4px;
+            font-size: 10px;
             line-height: 1.4;
-            color: #555;
+            color: #777;
             transition: background 0.2s;
         }
         .order-btn:hover { background:#e0e0e0; }
-        .order-btn:disabled { opacity:0.3; cursor:default; }
+        .order-btn:disabled { opacity:0.25; cursor:default; }
 
         .order-cell {
             white-space: nowrap;
             padding: 4px 6px !important;
+            width: 50px;
         }
 
         /* 비밀번호 변경 모달 */
@@ -726,7 +713,6 @@
         <div class="header">
             <h1>폐이식 TLC 계산기 + DSA 탐지</h1>
             <p class="subtitle">Lung Transplant TLC Calculator with DSA Detection</p>
-            <button class="btn btn-primary" onclick="openPwModal()" style="margin-top:10px;font-size:14px;padding:8px 18px;">🔑 비밀번호 변경</button>
         </div>
 
         <div class="main-content">
@@ -798,7 +784,6 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>순서</th>
                                 <th>수혜자 ID</th>
                                 <th>성별</th>
                                 <th>키 (cm)</th>
@@ -806,6 +791,7 @@
                                 <th>pTLC (mL)</th>
                                 <th>D/R 비율</th>
                                 <th>DSA 상태</th>
+                                <th>순서</th>
                             </tr>
                         </thead>
                         <tbody id="recipientTable"></tbody>
@@ -843,21 +829,24 @@
             <p class="helper-text">Excel 형식: id, gender, height, bloodType, pra_antibodies (Strong/Moderate/Mild/Weak로 구분)</p>
             <div class="success-message" id="successMessage"></div>
         </div>
-    </div>
 
-    <!-- 비밀번호 변경 모달 -->
-    <div id="pwModal" class="pw-modal">
-        <div class="pw-modal-content">
-            <h3>🔑 비밀번호 변경</h3>
-            <input type="password" id="pwCurrent" class="pw-input" placeholder="현재 비밀번호">
-            <div id="pwError1" class="pw-error">현재 비밀번호가 틀렸습니다.</div>
-            <input type="password" id="pwNew" class="pw-input" placeholder="새 비밀번호">
-            <input type="password" id="pwConfirm" class="pw-input" placeholder="새 비밀번호 확인">
-            <div id="pwError2" class="pw-error">새 비밀번호가 일치하지 않습니다.</div>
-            <div id="pwError3" class="pw-error">비밀번호를 입력해주세요.</div>
-            <div class="pw-btn-row">
-                <button class="btn btn-primary" onclick="changePassword()" style="flex:1;">변경</button>
-                <button class="btn" onclick="closePwModal()" style="flex:1;background:#95a5a6;color:white;">취소</button>
+        <!-- 비밀번호 변경 접이식 섹션 -->
+        <div class="excel-section" style="margin-top:15px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="togglePwSection()">
+                <h3 style="margin:0;">🔑 비밀번호 변경</h3>
+                <span id="pwArrow" style="font-size:18px;transition:transform 0.3s;">▼</span>
+            </div>
+            <div id="pwSection" style="display:none;margin-top:18px;">
+                <div style="max-width:360px;">
+                    <input type="password" id="pwCurrent" class="pw-input" placeholder="현재 비밀번호" style="margin-bottom:10px;">
+                    <div id="pwError1" class="pw-error">현재 비밀번호가 틀렸습니다.</div>
+                    <input type="password" id="pwNew" class="pw-input" placeholder="새 비밀번호" style="margin-bottom:10px;">
+                    <input type="password" id="pwConfirm" class="pw-input" placeholder="새 비밀번호 확인" style="margin-bottom:10px;">
+                    <div id="pwError2" class="pw-error">새 비밀번호가 일치하지 않습니다.</div>
+                    <div id="pwError3" class="pw-error">비밀번호를 입력해주세요.</div>
+                    <div id="pwSuccess" style="color:#27ae60;font-size:0.9em;display:none;margin-bottom:8px;">✅ 비밀번호가 변경되었습니다.</div>
+                    <button class="btn btn-primary" onclick="changePassword()" style="width:100%;">변경</button>
+                </div>
             </div>
         </div>
     </div>
@@ -936,19 +925,13 @@
             }
         })();
 
-        // 비밀번호 변경 함수들
-        function openPwModal() {
-            document.getElementById('pwCurrent').value = '';
-            document.getElementById('pwNew').value = '';
-            document.getElementById('pwConfirm').value = '';
-            document.getElementById('pwError1').style.display = 'none';
-            document.getElementById('pwError2').style.display = 'none';
-            document.getElementById('pwError3').style.display = 'none';
-            document.getElementById('pwModal').style.display = 'block';
-        }
-
-        function closePwModal() {
-            document.getElementById('pwModal').style.display = 'none';
+        // 비밀번호 변경 접이식
+        function togglePwSection() {
+            const section = document.getElementById('pwSection');
+            const arrow = document.getElementById('pwArrow');
+            const isOpen = section.style.display !== 'none';
+            section.style.display = isOpen ? 'none' : 'block';
+            arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
         }
 
         function changePassword() {
@@ -960,23 +943,17 @@
             document.getElementById('pwError1').style.display = 'none';
             document.getElementById('pwError2').style.display = 'none';
             document.getElementById('pwError3').style.display = 'none';
+            document.getElementById('pwSuccess').style.display = 'none';
 
-            if (!newPw) {
-                document.getElementById('pwError3').style.display = 'block';
-                return;
-            }
-            if (current !== storedPw) {
-                document.getElementById('pwError1').style.display = 'block';
-                return;
-            }
-            if (newPw !== confirm) {
-                document.getElementById('pwError2').style.display = 'block';
-                return;
-            }
+            if (!newPw) { document.getElementById('pwError3').style.display = 'block'; return; }
+            if (current !== storedPw) { document.getElementById('pwError1').style.display = 'block'; return; }
+            if (newPw !== confirm) { document.getElementById('pwError2').style.display = 'block'; return; }
 
             localStorage.setItem('app_password', newPw);
-            closePwModal();
-            alert('✅ 비밀번호가 변경되었습니다.');
+            document.getElementById('pwCurrent').value = '';
+            document.getElementById('pwNew').value = '';
+            document.getElementById('pwConfirm').value = '';
+            document.getElementById('pwSuccess').style.display = 'block';
         }
 
         // ===== Supabase 설정 =====
@@ -1293,7 +1270,7 @@
                 row.className = "blood-incompatible-row";
             }
 
-            // 순서 버튼
+            // 순서 버튼 (맨 오른쪽)
             const recipientIdx = recipients.findIndex(r => r.dbId === recipient.dbId);
             const upDisabled = recipientIdx === 0 ? 'disabled' : '';
             const downDisabled = recipientIdx === recipients.length - 1 ? 'disabled' : '';
@@ -1303,7 +1280,7 @@
                     <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',1)" ${downDisabled}>▼</button>
                 </td>`;
 
-            // DSA 인라인 표시
+            // DSA 인라인 표시 - 클릭 시 PRA 팝업 (버튼 없애고 항목 자체 클릭)
             let dsaCell = '';
             if (hasDSA) {
                 const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
@@ -1311,22 +1288,31 @@
                     if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody);
                 });
                 const strengths = ['Strong','Moderate','Mild','Weak'];
+                // JSON 직렬화 - praAntibodies 포함 확인
+                const recipientJson = JSON.stringify({
+                    id: recipient.id,
+                    gender: recipient.gender,
+                    height: recipient.height,
+                    bloodType: recipient.bloodType,
+                    praAntibodies: recipient.praAntibodies || ''
+                }).replace(/"/g, '&quot;');
+
                 let rows = strengths
                     .filter(s => byStrength[s].length > 0)
-                    .map(s => `<div class="dsa-strength-row">
+                    .map(s => `<div class="dsa-strength-row" style="cursor:pointer;" onclick="event.stopPropagation();showPraModal(JSON.parse(this.closest('td').dataset.recipient))">
                         <span class="dsa-strength-label ${s}">${s}</span>
                         <span class="dsa-alleles">${byStrength[s].join(', ')}</span>
                     </div>`).join('');
-                dsaCell = `<td class="dsa-inline-cell">
+
+                dsaCell = `<td class="dsa-inline-cell" data-recipient="${recipientJson}" style="cursor:pointer;" onclick="event.stopPropagation();showPraModal(JSON.parse(this.dataset.recipient))">
                     ${rows}
-                    <button class="pra-btn" onclick="event.stopPropagation();showPraModal(${JSON.stringify(recipient).replace(/'/g,"&#39;")})">📋 PRA 전체보기</button>
+                    <div style="font-size:10px;color:#c0392b;margin-top:3px;">👆 클릭하여 PRA 확인</div>
                 </td>`;
             } else {
                 dsaCell = `<td style="color:#27ae60;font-weight:600;">-</td>`;
             }
 
             row.innerHTML = `
-                ${orderCell}
                 <td>${recipient.id}</td>
                 <td>${recipient.gender}</td>
                 <td>${recipient.height}</td>
@@ -1334,6 +1320,7 @@
                 <td>${formatNumber(recipient.recipientTLC, 1)}</td>
                 <td>${formatNumber(recipient.ratio, 2)}</td>
                 ${dsaCell}
+                ${orderCell}
             `;
             return row;
         }
@@ -1567,11 +1554,9 @@
             const modal1 = document.getElementById('dsaModal');
             const modal2 = document.getElementById('dsaDetailModal');
             const modal3 = document.getElementById('praModal');
-            const pwModal = document.getElementById('pwModal');
             if (event.target === modal1) closeDSAModal();
             if (event.target === modal2) closeDSADetailModal();
             if (event.target === modal3) closePraModal();
-            if (event.target === pwModal) closePwModal();
         }
 
         function downloadTemplate() {
