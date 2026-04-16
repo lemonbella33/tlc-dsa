@@ -671,21 +671,21 @@
 
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 8px;
             }
 
             .main-content {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 10px;
             }
 
             .header h1 {
-                font-size: 1.6em;
+                font-size: 1.4em;
             }
 
             .hla-input-group {
-                grid-template-columns: 1fr;
-                gap: 8px;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
             }
 
             .button-group {
@@ -698,12 +698,60 @@
 
             .modal-content {
                 width: 95%;
-                margin: 10% auto;
+                margin: 5% auto;
             }
 
-            th, td {
-                font-size: 12px;
+            /* 모바일 테이블 - 가로 스크롤 허용 */
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                font-size: 11px;
+                min-width: 420px;
+            }
+
+            th {
                 padding: 6px 3px;
+                font-size: 10px;
+                white-space: nowrap;
+            }
+
+            td {
+                padding: 5px 3px;
+                font-size: 11px;
+            }
+
+            /* DSA 뱃지 모바일 축소 */
+            .dsa-strength-label {
+                font-size: 9px;
+                min-width: 44px;
+                padding: 1px 3px;
+            }
+
+            .dsa-alleles {
+                font-size: 10px;
+            }
+
+            .dsa-strength-row {
+                gap: 3px;
+                margin: 1px 0;
+            }
+
+            .dsa-inline-cell {
+                min-width: 100px !important;
+                padding: 4px 3px !important;
+            }
+
+            /* 순서버튼 모바일 */
+            .order-btn {
+                padding: 0px 3px;
+                font-size: 9px;
+            }
+
+            .order-cell {
+                width: 36px;
             }
         }
     </style>
@@ -784,21 +832,21 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>수혜자 ID</th>
+                                <th>ID</th>
                                 <th>성별</th>
-                                <th>키 (cm)</th>
+                                <th>키</th>
                                 <th>혈액형</th>
-                                <th>pTLC (mL)</th>
-                                <th>D/R 비율</th>
-                                <th>DSA 상태</th>
+                                <th>pTLC</th>
+                                <th>D/R</th>
+                                <th>DSA</th>
                                 <th>순서</th>
                             </tr>
                         </thead>
                         <tbody id="recipientTable"></tbody>
                     </table>
                 </div>
-                <div class="helper-text" style="margin-top: 15px; text-align: center;">
-                    💡 빨간색 행을 클릭하면 DSA 상세 정보를 확인할 수 있습니다
+                <div class="helper-text" style="margin-top: 10px; text-align: center;">
+                    💡 빨간색 행의 DSA 항목 클릭 시 PRA 상세 확인
                 </div>
 
                 <div class="memo-section">
