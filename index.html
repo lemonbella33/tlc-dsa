@@ -16,11 +16,13 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             padding: 20px;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            width: 100%;
         }
 
         .header {
@@ -51,6 +53,13 @@
             grid-template-columns: 400px 1fr;
             gap: 30px;
             margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
         }
 
         .card {
@@ -674,13 +683,38 @@
                 padding: 8px;
             }
 
+            .container {
+                width: 100%;
+                overflow-x: hidden;
+            }
+
             .main-content {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
 
+            .card {
+                padding: 15px;
+                border-radius: 10px;
+            }
+
+            .card-title {
+                margin: -15px -15px 15px -15px;
+                padding: 12px 15px;
+                font-size: 1.05em;
+            }
+
+            .header {
+                padding: 18px;
+                margin-bottom: 15px;
+            }
+
             .header h1 {
-                font-size: 1.4em;
+                font-size: 1.3em;
+            }
+
+            .header .subtitle {
+                font-size: 0.9em;
             }
 
             .hla-input-group {
@@ -701,32 +735,38 @@
                 margin: 5% auto;
             }
 
-            /* 모바일 테이블 - 가로 스크롤 허용 */
+            .excel-section {
+                padding: 15px;
+                border-radius: 10px;
+            }
+
+            /* 모바일 테이블 */
             .table-wrapper {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                margin: 0 -5px;
             }
 
             table {
                 font-size: 11px;
-                min-width: 420px;
+                min-width: 400px;
             }
 
             th {
-                padding: 6px 3px;
+                padding: 5px 2px;
                 font-size: 10px;
                 white-space: nowrap;
             }
 
             td {
-                padding: 5px 3px;
+                padding: 5px 2px;
                 font-size: 11px;
             }
 
             /* DSA 뱃지 모바일 축소 */
             .dsa-strength-label {
                 font-size: 9px;
-                min-width: 44px;
+                min-width: 40px;
                 padding: 1px 3px;
             }
 
@@ -740,8 +780,8 @@
             }
 
             .dsa-inline-cell {
-                min-width: 100px !important;
-                padding: 4px 3px !important;
+                min-width: 90px !important;
+                padding: 3px 2px !important;
             }
 
             /* 순서버튼 모바일 */
@@ -751,7 +791,7 @@
             }
 
             .order-cell {
-                width: 36px;
+                width: 34px;
             }
         }
     </style>
