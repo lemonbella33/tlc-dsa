@@ -1441,8 +1441,8 @@
             }
 
             row.innerHTML = `
-                <td>${recipient.id}</td>
-                <td>${recipient.gender}</td>
+                <td style="white-space:nowrap;">${recipient.id}</td>
+                <td>${recipient.gender === '남자' ? '남' : '여'}</td>
                 <td>${recipient.height}</td>
                 <td>${recipient.bloodType}</td>
                 <td>${formatNumber(recipient.recipientTLC, 1)}</td>
