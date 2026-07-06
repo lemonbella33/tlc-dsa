@@ -612,6 +612,22 @@
             font-size: 12px;
         }
 
+        /* 드래그앤드롭 */
+        #recipientTable tr {
+            cursor: grab;
+        }
+        #recipientTable tr:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #c8e6ff !important;
+        }
+        .sortable-drag {
+            opacity: 0.9;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
         /* 순서 조정 버튼 */
         .order-btn {
             background: none;
@@ -1007,6 +1023,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
         // ===== Supabase 설정 =====
@@ -1370,6 +1387,23 @@
                 tableBody.appendChild(row);
             });
             window._currentOrdered = ordered;
+
+            // SortableJS 초기화 (드래그앤드롭)
+            if (window._sortable) window._sortable.destroy();
+            window._sortable = new Sortable(tableBody, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: function(evt) {
+                    // 드래그 후 새 순서를 manualOrder에 반영
+                    const newOrdered = [...window._currentOrdered];
+                    const moved = newOrdered.splice(evt.oldIndex, 1)[0];
+                    newOrdered.splice(evt.newIndex, 0, moved);
+                    manualOrder = newOrdered.map(r => r.dbId);
+                    window._currentOrdered = newOrdered;
+                    renderRecipients();
+                }
+            });
         }
 
         // 순서 조정: manualOrder 배열로 관리
