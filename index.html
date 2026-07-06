@@ -613,19 +613,29 @@
         }
 
         /* 드래그앤드롭 */
-        #recipientTable tr {
+        .drag-handle {
             cursor: grab;
+            font-size: 16px;
+            color: #aaa;
+            padding: 0 4px;
+            user-select: none;
+            display: inline-block;
+            vertical-align: middle;
         }
-        #recipientTable tr:active {
+        .drag-handle:active {
             cursor: grabbing;
+        }
+        #recipientTable tr {
+            transition: background 0.1s;
         }
         .sortable-ghost {
             opacity: 0.4;
             background: #c8e6ff !important;
         }
-        .sortable-drag {
-            opacity: 0.9;
+        .sortable-fallback {
+            opacity: 0.9 !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background: white !important;
         }
 
         /* 순서 조정 버튼 */
@@ -1394,8 +1404,13 @@
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                forceFallback: true,
+                fallbackTolerance: 5,
+                delay: 100,
+                delayOnTouchOnly: true,
                 onEnd: function(evt) {
-                    // 드래그 후 새 순서를 manualOrder에 반영
+                    if (evt.oldIndex === evt.newIndex) return;
                     const newOrdered = [...window._currentOrdered];
                     const moved = newOrdered.splice(evt.oldIndex, 1)[0];
                     newOrdered.splice(evt.newIndex, 0, moved);
@@ -1439,8 +1454,7 @@
             const orderedJson = JSON.stringify(orderedIds).replace(/"/g, '&quot;');
             const orderCell = `
                 <td class="order-cell">
-                    <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',-1,window._currentOrdered)" ${upDisabled}>▲</button>
-                    <button class="order-btn" onclick="event.stopPropagation();moveRecipient('${recipient.dbId}',1,window._currentOrdered)" ${downDisabled}>▼</button>
+                    <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
                 </td>`;
 
             // DSA 인라인 표시 - 혈액형 불일치면 DSA 있어도 표시 안 함
