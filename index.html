@@ -1160,15 +1160,25 @@
         async function loadRecipients() {
             try {
                 const data = await sbFetch('recipients?select=*&order=order_index.asc&limit=1000');
-                recipients = data.map(r => ({
-                    id: r.recipient_name ? r.recipient_name.trim() : '',
-                    gender: r.gender ? r.gender.trim() : '',
-                    height: r.height,
-                    bloodType: r.bloodType ? r.bloodType.trim() : '',
-                    praAntibodies: r.pra_antibodies ? r.pra_antibodies.trim() : '',
-                    dbId: r.id,
-                    orderIndex: r.order_index
-                }));
+                recipients = data.map(r => {
+                    const rawPra = r.pra_antibodies ? r.pra_antibodies : '';
+                    const cleanPra = rawPra
+                        .replace(/\r\n/g, '\n')
+                        .replace(/\r/g, '\n')
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line !== '')
+                        .join('\n');
+                    return {
+                        id: r.recipient_name ? r.recipient_name.trim() : '',
+                        gender: r.gender ? r.gender.trim() : '',
+                        height: r.height,
+                        bloodType: r.bloodType ? r.bloodType.trim() : '',
+                        praAntibodies: cleanPra,
+                        dbId: r.id,
+                        orderIndex: r.order_index
+                    };
+                });
                 renderRecipients();
             } catch (error) {
                 console.error('수혜자 목록 로드 실패:', error);
@@ -1776,13 +1786,25 @@
                 const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
                 const parsed = rows
-                    .map((row) => ({
-                        id: (row.id || row.ID || row["수혜자 ID"] || "").toString().trim(),
-                        gender: (row.gender || row.Gender || row["성별"] || "").toString().trim(),
-                        height: Number(row.height || row.Height || row["키"] || 0),
-                        bloodType: (row.bloodType || row.BloodType || row["혈액형"] || "").toString().trim(),
-                        praAntibodies: (row.pra_antibodies || row.PRA || row["PRA"] || row["항체"] || "").toString().trim()
-                    }))
+                    .map((row) => {
+                        // PRA 텍스트 정리: \r 제거 + 연속 빈 줄 제거 + 앞뒤 공백 제거
+                        const rawPra = (row.pra_antibodies || row.PRA || row["PRA"] || row["항체"] || "").toString();
+                        const cleanPra = rawPra
+                            .replace(/\r\n/g, '\n')   // 윈도우 줄바꿈 통일
+                            .replace(/\r/g, '\n')      // 맥 구형 줄바꿈 통일
+                            .split('\n')
+                            .map(line => line.trim())  // 각 줄 앞뒤 공백 제거
+                            .filter(line => line !== '') // 빈 줄 제거
+                            .join('\n');               // 다시 합치기
+
+                        return {
+                            id: (row.id || row.ID || row["수혜자 ID"] || "").toString().trim(),
+                            gender: (row.gender || row.Gender || row["성별"] || "").toString().trim(),
+                            height: Number(row.height || row.Height || row["키"] || 0),
+                            bloodType: (row.bloodType || row.BloodType || row["혈액형"] || "").toString().trim(),
+                            praAntibodies: cleanPra
+                        };
+                    })
                     .filter((row) => row.id && row.gender && row.height && row.bloodType);
 
                 if (parsed.length > 0) {
