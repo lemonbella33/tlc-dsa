@@ -869,22 +869,22 @@
                     <div class="hla-input-group">
                         <div class="hla-input-item">
                             <label>HLA-A</label>
-                            <input type="text" id="donorHLA_A" placeholder="예: A1,A2">
+                            <input type="text" id="donorHLA_A" placeholder="예: A1/A2">
                         </div>
                         <div class="hla-input-item">
                             <label>HLA-B</label>
-                            <input type="text" id="donorHLA_B" placeholder="예: B7,B8">
+                            <input type="text" id="donorHLA_B" placeholder="예: B7/B8">
                         </div>
                         <div class="hla-input-item">
                             <label>HLA-DR</label>
-                            <input type="text" id="donorHLA_DR" placeholder="예: DR15,DR4">
+                            <input type="text" id="donorHLA_DR" placeholder="예: DR15/DR4">
                         </div>
                         <div class="hla-input-item">
                             <label>HLA-DQ</label>
-                            <input type="text" id="donorHLA_DQ" placeholder="예: DQ6,DQ2">
+                            <input type="text" id="donorHLA_DQ" placeholder="예: DQ6/DQ2">
                         </div>
                     </div>
-                    <div class="helper-text">쉼표로 구분하여 입력 (예: A1,A2). 숫자만 입력해도 됨 (예: 1,2)</div>
+                    <div class="helper-text">/ 로 구분하여 입력 (예: A1/A2). 숫자만 입력해도 됨 (예: 1/2)</div>
                 </div>
 
                 <div class="donor-result" id="donorResult">
@@ -1281,7 +1281,8 @@
         function parseHLATyping(input, locus) {
             if (!input) return [];
             
-            const parts = input.split(',').map(s => s.trim()).filter(s => s);
+            // , 와 / 둘 다 구분자로 허용
+            const parts = input.split(/[,\/]/).map(s => s.trim()).filter(s => s);
             
             return parts.map(part => {
                 if (part.toUpperCase().startsWith(locus.toUpperCase())) {
