@@ -1885,7 +1885,9 @@
             const donorHLA = getDonorHLATyping();
             const donorTLC = calculateTLC(donorHeight, donorGender);
 
-            const lines = window._currentOrdered.map(recipient => {
+            const lines = window._currentOrdered
+                .filter(recipient => recipient.bloodOk)  // 혈액형 호환된 경우만
+                .map(recipient => {
                 const ratio = formatNumber(recipient.ratio, 2);
                 const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
 
