@@ -915,6 +915,11 @@
                 <div class="helper-text" style="margin-top: 10px; text-align: center;">
                     💡 빨간색 행의 DSA 항목 클릭 시 PRA 상세 확인
                 </div>
+                <div style="text-align:center; margin-top:12px;">
+                    <button class="btn btn-success" onclick="downloadResultText()" style="font-size:13px;padding:8px 20px;">
+                        📄 결과 텍스트 다운로드
+                    </button>
+                </div>
 
                 <div class="memo-section">
                     <label class="memo-label">📝 메모</label>
@@ -1866,6 +1871,63 @@
             memoTimer = setTimeout(() => {
                 saveMemo();
             }, 800);
+        }
+
+        // 결과 텍스트 다운로드
+        function downloadResultText() {
+            if (!window._currentOrdered || window._currentOrdered.length === 0) {
+                alert('목록이 없습니다. 기증자 정보를 먼저 입력해주세요.');
+                return;
+            }
+
+            const donorGender = document.querySelector("input[name='donorGender']:checked").value;
+            const donorHeight = Number(document.getElementById("donorHeight").value);
+            const donorHLA = getDonorHLATyping();
+            const donorTLC = calculateTLC(donorHeight, donorGender);
+
+            const lines = window._currentOrdered.map(recipient => {
+                const ratio = formatNumber(recipient.ratio, 2);
+                const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
+
+                if (dsaMatches.length === 0) {
+                    return `${recipient.id}  ${ratio}`;
+                }
+
+                // DSA 강도별 그룹화
+                const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
+                dsaMatches.forEach(m => {
+                    if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody);
+                });
+
+                const dsaParts = ['Strong', 'Moderate', 'Mild', 'Weak']
+                    .filter(s => byStrength[s].length > 0)
+                    .map(s => `${s} ${byStrength[s].join(', ')}`);
+
+                return `${recipient.id}  ${ratio}  ${dsaParts.join(' / ')}`;
+            });
+
+            // 헤더 추가
+            const donorBloodType = document.getElementById("donorBloodType").value;
+            const now = new Date().toLocaleDateString('ko-KR');
+            const header = [
+                `[폐이식 TLC 계산기 결과]`,
+                `생성일: ${now}`,
+                `기증자: ${donorGender} / ${donorHeight}cm / ${donorBloodType}형 / pTLC ${formatNumber(donorTLC, 1)} mL`,
+                `─────────────────────────`,
+                `이름  D/R  DSA`,
+                `─────────────────────────`,
+            ].join('\n');
+
+            const content = header + '\n' + lines.join('\n');
+
+            // 다운로드
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TLC_결과_${now.replace(/\./g, '')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         // ===== 이력관리 =====
