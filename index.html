@@ -1,2129 +1,544 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>폐이식 TLC 계산기 + DSA 탐지</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 20px;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .header .subtitle {
-            color: #7f8c8d;
-            font-size: 1.1em;
-            margin-bottom: 15px;
-        }
-
-
-
-
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            background: #4472c4;
-            color: white;
-            padding: 15px;
-            margin: -25px -25px 20px -25px;
-            border-radius: 15px 15px 0 0;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #34495e;
-        }
-
-        .input-group input[type="number"],
-        .input-group input[type="text"],
-        .input-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input[type="number"]:focus,
-        .input-group input[type="text"]:focus,
-        .input-group select:focus {
-            outline: none;
-            border-color: #4472c4;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 20px;
-        }
-
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .radio-group input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 8px;
-            cursor: pointer;
-        }
-
-        .helper-text {
-            font-size: 0.85em;
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-
-        .memo-section {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-
-        .memo-label {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .memo-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 60px;
-            transition: border-color 0.3s;
-        }
-
-        .memo-input:focus {
-            outline: none;
-            border-color: #4472c4;
-            box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
-        }
-
-        .memo-counter {
-            text-align: right;
-            font-size: 0.8em;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
-        .memo-counter.warning {
-            color: #e74c3c;
-            font-weight: 600;
-        }
-
-        .hla-input-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .hla-input-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .hla-input-item label {
-            font-size: 0.9em;
-            font-weight: 600;
-            color: #34495e;
-            margin-bottom: 5px;
-        }
-
-        .hla-input-item input {
-            padding: 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .donor-result {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        th {
-            background: #4472c4;
-            color: white;
-            padding: 10px 6px;
-            text-align: center;
-            font-weight: 600;
-            border: 1px solid #3a5fa0;
-            white-space: nowrap;
-            font-size: 13px;
-        }
-
-        td {
-            padding: 8px 4px;
-            text-align: center;
-            border: 1px solid #e0e0e0;
-            transition: all 0.3s;
-            font-size: 13px;
-        }
-
-        tr:hover td {
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .blood-compatible-row {
-            background-color: #c8e6c9;
-            color: #1b5e20;
-            font-weight: 500;
-        }
-
-        .blood-compatible-row td {
-            border-color: #a5d6a7;
-        }
-
-        .blood-incompatible-row {
-            background-color: #f5f5f5;
-            color: #9e9e9e;
-        }
-
-        .blood-incompatible-row td {
-            border-color: #e0e0e0;
-        }
-
-        .dsa-positive-row {
-            background-color: #ffcccc !important;
-            color: #c0392b !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-        }
-
-        .dsa-positive-row:hover {
-            background-color: #ffb3b3 !important;
-            transform: scale(1.01);
-            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3) !important;
-        }
-
-        .dsa-positive-row td {
-            border-color: #e74c3c !important;
-        }
-
-        .dsa-badge {
-            display: inline-block;
-            background: #e74c3c;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .dsa-badge:hover {
-            background: #c0392b;
-        }
-
-        .strength-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 0.75em;
-            font-weight: 600;
-            margin-left: 3px;
-        }
-
-        .strength-Strong {
-            background: #d32f2f;
-            color: white;
-        }
-
-        .strength-Moderate {
-            background: #ff9800;
-            color: white;
-        }
-
-        .strength-Mild {
-            background: #ffc107;
-            color: #333;
-        }
-
-        .strength-Weak {
-            background: #ffeb3b;
-            color: #333;
-        }
-
-        .clickable-hint {
-            font-size: 0.75em;
-            color: #c0392b;
-            margin-left: 5px;
-        }
-
-        .excel-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
-        }
-
-        .excel-section h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: #4472c4;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #365a9e;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(68, 114, 196, 0.3);
-        }
-
-        .btn-success {
-            background: #4caf50;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
-        }
-
-        .success-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 15px;
-            display: none;
-        }
-
-        /* 팝업 모달 스타일 */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            animation: slideDown 0.3s;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            background: #e74c3c;
-            color: white;
-            padding: 20px;
-            font-size: 1.3em;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-body {
-            padding: 25px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        .close-btn {
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-            border-radius: 50%;
-            transition: background 0.3s;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .dsa-detail-box {
-            background: #fff5f5;
-            border-left: 4px solid #e74c3c;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-        }
-
-        .dsa-detail-box h3 {
-            color: #c0392b;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .dsa-info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #ffdddd;
-        }
-
-        .dsa-info-row:last-child {
-            border-bottom: none;
-        }
-
-        .dsa-info-label {
-            font-weight: 600;
-            color: #555;
-        }
-
-        .dsa-info-value {
-            color: #333;
-        }
-
-        .antibody-match-detail {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 2px solid #e74c3c;
-        }
-
-        .antibody-match-detail h4 {
-            color: #e74c3c;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-
-        .match-item {
-            background: #ffe6e6;
-            padding: 8px 12px;
-            margin: 5px 0;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .match-arrow {
-            color: #e74c3c;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .match-allele {
-            background: #e74c3c;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .dsa-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .dsa-list-item {
-            background: #fff5f5;
-            border-left: 4px solid #e74c3c;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .dsa-list-item:hover {
-            background: #ffe6e6;
-            transform: translateX(5px);
-        }
-
-        .dsa-list-item h4 {
-            color: #c0392b;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-
-        .dsa-list-item .antibody-list {
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .dsa-list-item .antibody-match {
-            background: #e74c3c;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-            margin: 0 2px;
-        }
-
-        /* DSA 인라인 표시 */
-        .dsa-inline-cell {
-            text-align: left !important;
-            padding: 6px 8px !important;
-            min-width: 180px;
-        }
-
-        .dsa-strength-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 2px 0;
-            font-size: 12px;
-        }
-
-        .dsa-strength-label {
-            font-weight: 700;
-            min-width: 68px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 11px;
-        }
-
-        .dsa-strength-label.Strong  { background:#d32f2f; color:#fff; }
-        .dsa-strength-label.Moderate{ background:#ff9800; color:#fff; }
-        .dsa-strength-label.Mild    { background:#ffc107; color:#333; }
-        .dsa-strength-label.Weak    { background:#ffeb3b; color:#333; }
-
-        .dsa-alleles {
-            color: #333;
-            font-size: 12px;
-        }
-
-        /* 드래그앤드롭 */
-        .drag-handle {
-            cursor: grab;
-            font-size: 16px;
-            color: #aaa;
-            padding: 0 4px;
-            user-select: none;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-        #recipientTable tr {
-            transition: background 0.1s;
-        }
-        .sortable-ghost {
-            opacity: 0.4;
-            background: #c8e6ff !important;
-        }
-        .sortable-fallback {
-            opacity: 0.9 !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            background: white !important;
-        }
-
-        /* 순서 조정 버튼 */
-        .order-btn {
-            background: none;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            cursor: pointer;
-            padding: 0px 4px;
-            font-size: 10px;
-            line-height: 1.4;
-            color: #777;
-            transition: background 0.2s;
-        }
-        .order-btn:hover { background:#e0e0e0; }
-        .order-btn:disabled { opacity:0.25; cursor:default; }
-
-        .order-cell {
-            white-space: nowrap;
-            padding: 4px 6px !important;
-            width: 50px;
-        }
-
-        /* 비밀번호 변경 모달 */
-        .pw-modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-        }
-        .pw-modal-content {
-            background: white;
-            margin: 20% auto;
-            padding: 35px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 420px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        .pw-modal-content h3 {
-            margin-bottom: 20px;
-            color: #2c3e50;
-            font-size: 1.2em;
-        }
-        .pw-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            margin-bottom: 12px;
-            box-sizing: border-box;
-        }
-        .pw-input:focus { outline:none; border-color:#4472c4; }
-        .pw-btn-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .pw-error { color:#e74c3c; font-size:0.9em; margin-top:-6px; margin-bottom:8px; display:none; }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 8px;
-                overflow-x: hidden;
-            }
-
-            .container {
-                width: 100%;
-                max-width: 100vw;
-                overflow-x: hidden;
-            }
-
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .card {
-                padding: 15px;
-                border-radius: 10px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .card-title {
-                margin: -15px -15px 15px -15px;
-                padding: 12px 15px;
-                font-size: 1.05em;
-            }
-
-            .header {
-                padding: 15px;
-                margin-bottom: 12px;
-            }
-
-            .header h1 {
-                font-size: 1.3em;
-            }
-
-            .header .subtitle {
-                font-size: 0.88em;
-            }
-
-            .hla-input-group {
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            .modal-content {
-                width: 95%;
-                margin: 5% auto;
-            }
-
-            .excel-section {
-                padding: 15px;
-                border-radius: 10px;
-            }
-
-            /* 테이블: 카드 안에서 가로 스크롤만, 절대 밖으로 안 나감 */
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                width: 100%;
-                max-width: 100%;
-            }
-
-            table {
-                font-size: 11px;
-                width: 100%;
-                min-width: 0;
-            }
-
-            th {
-                padding: 5px 3px;
-                font-size: 10px;
-                white-space: nowrap;
-            }
-
-            td {
-                padding: 5px 3px;
-                font-size: 11px;
-            }
-
-            .dsa-strength-label {
-                font-size: 9px;
-                min-width: 38px;
-                padding: 1px 3px;
-            }
-
-            .dsa-alleles {
-                font-size: 10px;
-            }
-
-            .dsa-strength-row {
-                gap: 3px;
-                margin: 1px 0;
-            }
-
-            .dsa-inline-cell {
-                min-width: 80px !important;
-                padding: 3px 2px !important;
-            }
-
-            .order-btn {
-                padding: 6px 8px;
-                font-size: 11px;
-                min-width: 28px;
-                min-height: 28px;
-            }
-
-            .order-cell {
-                width: 40px;
-            }
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DSA Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI Emoji','Apple Color Emoji',sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
+#pw-gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e3a5f 0%,#2d6a9f 100%)}
+.pw-box{background:#fff;border-radius:16px;padding:40px 36px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.pw-icon{font-size:48px;margin-bottom:16px}
+.pw-box h2{font-size:20px;font-weight:700;color:#1e3a5f;margin-bottom:8px}
+.pw-box p{font-size:13px;color:#64748b;margin-bottom:24px}
+.pw-box input{width:100%;padding:12px 14px;font-size:15px;border:2px solid #e2e8f0;border-radius:8px;outline:none;text-align:center;letter-spacing:3px;transition:border-color .2s;font-family:inherit}
+.pw-box input:focus{border-color:#2d6a9f}
+.pw-box input.shake{border-color:#ef4444;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pw-err{color:#ef4444;font-size:12px;margin-top:8px;min-height:18px}
+.btn-enter{margin-top:16px;width:100%;padding:12px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;font-family:inherit}
+.btn-enter:hover{background:#2d6a9f}
+#cfg-banner{display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:14px 18px;margin:16px 20px;font-size:13px;color:#92400e;line-height:1.6}
+#cfg-banner b{color:#78350f}
+#cfg-banner code{background:#fde68a;padding:1px 5px;border-radius:3px;font-size:12px}
+#app{display:none;flex-direction:column;min-height:100vh}
+.hdr{background:#1e3a5f;color:#fff;height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-title{font-size:19px;font-weight:700}
+.hdr-right{display:flex;align-items:center;gap:8px}
+#save-status{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.12);color:#94a3b8}
+#save-status.saving{color:#fff;background:rgba(255,255,255,.18)}
+#save-status.saved{color:#86efac;background:rgba(134,239,172,.15)}
+#save-status.error{color:#fca5a5;background:rgba(252,165,165,.15)}
+.btn-ghost{background:rgba(255,255,255,.1);color:#e2e8f0;border:1px solid rgba(255,255,255,.22);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;transition:background .2s;white-space:nowrap;font-family:inherit}
+.btn-ghost:hover{background:rgba(255,255,255,.2)}
+.content{flex:1;padding:20px;max-width:1200px;margin:0 auto;width:100%}
+.card{background:#fff;border-radius:12px;padding:22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #e2e8f0}
+.card-title{font-size:15px;font-weight:700;color:#1e3a5f;margin-bottom:14px}
+.hla-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hla-group label{display:block;font-size:11px;font-weight:600;color:#64748b;letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
+.hla-group input{width:100%;padding:9px 11px;font-size:13px;border:2px solid #e2e8f0;border-radius:7px;outline:none;transition:border-color .2s;font-family:inherit}
+.hla-group input:focus{border-color:#2d6a9f}
+.hla-hint{font-size:11px;color:#94a3b8;margin-top:10px}
+.hla-hint b{color:#475569}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f1f5f9;padding:9px 11px;text-align:left;font-size:11px;font-weight:700;color:#475569;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;text-transform:uppercase}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s}
+tbody tr:hover{background:#fafcff}
+tbody tr:last-child{border-bottom:none}
+td{padding:7px 9px;vertical-align:middle}
+.col-name{width:160px;min-width:160px}.col-pra{min-width:200px}.col-flag{width:80px;text-align:center}.col-result{width:260px}.col-del{width:36px;text-align:center}
+td input[type="text"],td textarea{width:100%;padding:7px 9px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:6px;outline:none;font-family:inherit;transition:border-color .2s;resize:vertical;min-width:0}
+td input[type="text"]:focus,td textarea:focus{border-color:#2d6a9f}
+td textarea{min-height:60px;line-height:1.5}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-pos{background:#fee2e2;color:#dc2626}
+.badge-neg{background:#dcfce7;color:#16a34a}
+.badge-pend{background:#f1f5f9;color:#94a3b8}
+.dsa-line{font-size:12px;line-height:1.7;margin:1px 0}
+.s-strong{color:#dc2626;font-weight:700}.s-moderate{color:#ea580c;font-weight:600}.s-mild{color:#2563eb;font-weight:500}.s-weak{color:#64748b}
+.btn-del{background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:15px;padding:3px 5px;border-radius:4px;line-height:1;transition:color .15s;font-family:inherit}
+.btn-del:hover{color:#ef4444}
+.action-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:#1e3a5f;color:#fff}.btn-primary:hover{background:#2d6a9f}
+.btn-secondary{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}.btn-secondary:hover{background:#e2e8f0}
+.btn-success{background:#16a34a;color:#fff}.btn-success:hover{background:#15803d}
+.btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}.btn-danger:hover{background:#fee2e2}
+.note{font-size:11px;color:#94a3b8;margin-top:9px}
+#hist-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4)}
+#hist-panel{position:fixed;top:0;right:0;bottom:0;z-index:201;width:390px;max-width:95vw;background:#fff;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.15);transform:translateX(100%);transition:transform .28s ease}
+#hist-panel.open{transform:translateX(0)}
+.hp-hdr{background:#1e3a5f;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hp-hdr h3{font-size:14px;font-weight:600}
+.hp-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 3px;line-height:1}
+#hist-list{flex:1;overflow-y:auto;padding:10px}
+.h-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px 13px;margin-bottom:9px;transition:border-color .15s}
+.h-item:hover{border-color:#93c5fd}
+.h-item.active{border-color:#1e3a5f;background:#eff6ff}
+.h-hla{font-size:12px;font-weight:600;color:#1e3a5f;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-meta{font-size:11px;color:#64748b;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.h-dsa{background:#fee2e2;color:#dc2626;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700}
+.h-btns{display:flex;gap:5px;margin-top:7px}
+.h-btn{flex:1;padding:4px 8px;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;border:none;font-family:inherit}
+.h-btn-load{background:#1e3a5f;color:#fff}.h-btn-load:hover{background:#2d6a9f}
+.h-btn-del{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}.h-btn-del:hover{background:#fee2e2}
+.h-empty{text-align:center;color:#94a3b8;padding:36px 16px;font-size:13px}
+.pw-chg-section{border-top:1px solid #e2e8f0;padding:18px 22px;background:#f8fafc}
+.pw-chg-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#64748b;background:none;border:none;font-family:inherit;padding:0}
+.pw-chg-toggle:hover{color:#1e3a5f}
+.pw-chg-body{display:none}
+.pw-chg-fields{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.pw-chg-fields input{padding:8px 11px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:7px;outline:none;font-family:inherit;transition:border-color .2s}
+.pw-chg-fields input:focus{border-color:#2d6a9f}
+.pw-chg-fields .btn-pw-save{padding:8px;background:#1e3a5f;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.pw-chg-fields .btn-pw-save:hover{background:#2d6a9f}
+#pw-chg-msg{font-size:12px;margin-top:5px;min-height:16px}
+#pw-chg-msg.ok{color:#16a34a}
+#pw-chg-msg.err{color:#dc2626}
+footer{background:#fff;border-top:1px solid #e2e8f0;padding:12px 22px;text-align:center;font-size:11px;color:#94a3b8}
+@media(max-width:680px){
+  .hla-grid{grid-template-columns:repeat(2,1fr)}
+  #hist-panel{width:100vw}
+  .action-bar{flex-direction:column}
+  .btn{width:100%;text-align:center}
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>폐이식 TLC 계산기 + DSA 탐지</h1>
-            <p class="subtitle">Lung Transplant TLC Calculator with DSA Detection</p>
-        </div>
 
-        <div class="main-content">
-            <div class="card">
-                <div class="card-title">기증자 정보 입력</div>
+<div id="pw-gate">
+  <div class="pw-box">
+    <div class="pw-icon">🔒</div>
+    <h2>DSA Detector</h2>
+    <p>비밀번호를 입력하세요</p>
+    <input id="pw-input" type="password" placeholder="비밀번호"/>
+    <div id="pw-err" class="pw-err"></div>
+    <button class="btn-enter" id="pw-btn">입장</button>
+  </div>
+</div>
 
-                <div class="input-group">
-                    <label>성별</label>
-                    <div class="radio-group">
-                        <label>
-                            <input type="radio" name="donorGender" value="남자" checked>
-                            남자
-                        </label>
-                        <label>
-                            <input type="radio" name="donorGender" value="여자">
-                            여자
-                        </label>
-                    </div>
-                </div>
+<div id="cfg-banner">
+  ⚠️ <b>Supabase 연결 전 임시 모드입니다.</b>
+  저장 데이터가 <b>이 브라우저에만</b> 유지됩니다. 다른 기기와 공유하려면
+  <code>SUPABASE_URL</code> 과 <code>SUPABASE_ANON_KEY</code> 를 설정하세요.
+</div>
 
-                <div class="input-group">
-                    <label>키 (cm)</label>
-                    <input type="number" id="donorHeight" min="140" max="220" step="1" value="180">
-                    <div class="helper-text">키를 cm 단위로 입력하세요 (예: 180)</div>
-                </div>
+<div id="hist-overlay"></div>
+<div id="hist-panel">
+  <div class="hp-hdr">
+    <h3>📋 저장된 분석 내역</h3>
+    <button class="hp-close" id="btn-hp-close">✕</button>
+  </div>
+  <div id="hist-list"><p class="h-empty">저장된 내역이 없습니다.</p></div>
+</div>
 
-                <div class="input-group">
-                    <label>혈액형</label>
-                    <select id="donorBloodType">
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="O">O</option>
-                        <option value="AB">AB</option>
-                    </select>
-                </div>
+<div id="app">
+  <header class="hdr">
+    <div class="hdr-title">🔬 DSA Detector</div>
+    <div class="hdr-right">
+      <span id="save-status">—</span>
+      <button class="btn-ghost" id="btn-new">＋ 새 분석</button>
+      <button class="btn-ghost" id="btn-history">📋 이력</button>
+    </div>
+  </header>
 
-                <div class="input-group">
-                    <label>🧬 Donor HLA Typing</label>
-                    <div class="hla-input-group">
-                        <div class="hla-input-item">
-                            <label>HLA-A</label>
-                            <input type="text" id="donorHLA_A" placeholder="예: A1/A2">
-                        </div>
-                        <div class="hla-input-item">
-                            <label>HLA-B</label>
-                            <input type="text" id="donorHLA_B" placeholder="예: B7/B8">
-                        </div>
-                        <div class="hla-input-item">
-                            <label>HLA-DR</label>
-                            <input type="text" id="donorHLA_DR" placeholder="예: DR15/DR4">
-                        </div>
-                        <div class="hla-input-item">
-                            <label>HLA-DQ</label>
-                            <input type="text" id="donorHLA_DQ" placeholder="예: DQ6/DQ2">
-                        </div>
-                    </div>
-                    <div class="helper-text">/ 로 구분하여 입력 (예: A1/A2). 숫자만 입력해도 됨 (예: 1/2)</div>
-                </div>
-
-                <div class="donor-result" id="donorResult">
-                    기증자 pTLC: <span id="donorTLC">0.0</span> mL
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">매칭 수혜자 목록</div>
-
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>성별</th>
-                                <th>키</th>
-                                <th>혈액형</th>
-                                <th>pTLC</th>
-                                <th>D/R</th>
-                                <th>DSA</th>
-                                <th>순서</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recipientTable"></tbody>
-                    </table>
-                </div>
-                <div class="helper-text" style="margin-top: 10px; text-align: center;">
-                    💡 빨간색 행의 DSA 항목 클릭 시 PRA 상세 확인
-                </div>
-                <div style="text-align:center; margin-top:12px;">
-                    <button class="btn btn-success" onclick="downloadResultText()" style="font-size:13px;padding:8px 20px;">
-                        📄 결과 텍스트 다운로드
-                    </button>
-                </div>
-
-                <div class="memo-section">
-                    <label class="memo-label">📝 메모</label>
-                    <textarea 
-                        id="memoInput" 
-                        class="memo-input" 
-                        placeholder="메모를 입력하세요 (최대 200자)"
-                        maxlength="200"
-                        oninput="updateMemoCounter()"
-                    ></textarea>
-                    <div class="memo-counter" id="memoCounter">0 / 200자</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="excel-section">
-            <h3>수혜자 목록 관리 (고급)</h3>
-            <div class="button-group">
-                <button class="btn btn-primary" onclick="downloadTemplate()">
-                    📥 Excel 템플릿 다운로드
-                </button>
-                <button class="btn btn-success" onclick="document.getElementById('fileInput').click()">
-                    📤 Excel 파일 업로드
-                </button>
-                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handleFileUpload(event)">
-            </div>
-            <p class="helper-text">Excel 형식: id, gender, height, bloodType, pra_antibodies (Strong/Moderate/Mild/Weak로 구분)</p>
-            <div class="success-message" id="successMessage"></div>
-        </div>
-
-        <!-- 이력관리 섹션 -->
-        <div class="excel-section" style="margin-top:15px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleSnapshotSection()">
-                <h3 style="margin:0;">📁 목록 이력 관리</h3>
-                <span id="snapshotArrow" style="font-size:18px;transition:transform 0.3s;">▼</span>
-            </div>
-            <div id="snapshotSection" style="display:none;margin-top:18px;">
-                <div style="display:flex;gap:10px;margin-bottom:15px;align-items:center;">
-                    <input type="text" id="snapshotName" placeholder="이력 이름 입력 (예: 2026-04-15 Donor A)" 
-                        style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;">
-                    <button class="btn btn-primary" onclick="saveSnapshot()" style="white-space:nowrap;">💾 현재 목록 저장</button>
-                </div>
-                <div id="snapshotList" style="display:flex;flex-direction:column;gap:10px;">
-                    <div style="color:#999;text-align:center;padding:20px;">저장된 이력이 없습니다.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 비밀번호 변경 접이식 섹션 -->
-        <div class="excel-section" style="margin-top:15px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="togglePwSection()">
-                <h3 style="margin:0;">🔑 비밀번호 변경</h3>
-                <span id="pwArrow" style="font-size:18px;transition:transform 0.3s;">▼</span>
-            </div>
-            <div id="pwSection" style="display:none;margin-top:18px;">
-                <div style="max-width:360px;">
-                    <input type="password" id="pwCurrent" class="pw-input" placeholder="현재 비밀번호" style="margin-bottom:10px;">
-                    <div id="pwError1" class="pw-error">현재 비밀번호가 틀렸습니다.</div>
-                    <input type="password" id="pwNew" class="pw-input" placeholder="새 비밀번호" style="margin-bottom:10px;">
-                    <input type="password" id="pwConfirm" class="pw-input" placeholder="새 비밀번호 확인" style="margin-bottom:10px;">
-                    <div id="pwError2" class="pw-error">새 비밀번호가 일치하지 않습니다.</div>
-                    <div id="pwError3" class="pw-error">비밀번호를 입력해주세요.</div>
-                    <div id="pwSuccess" style="color:#27ae60;font-size:0.9em;display:none;margin-bottom:8px;">✅ 비밀번호가 변경되었습니다.</div>
-                    <button class="btn btn-primary" onclick="changePassword()" style="width:100%;">변경</button>
-                </div>
-            </div>
-        </div>
+  <main class="content">
+    <div class="card">
+      <div class="card-title">🧬 Donor HLA Typing</div>
+      <div class="hla-grid">
+        <div class="hla-group"><label>HLA-A</label><input id="hla-a" type="text" placeholder="예: 2, 24  또는  2/24"/></div>
+        <div class="hla-group"><label>HLA-B</label><input id="hla-b" type="text" placeholder="예: 35, 51  또는  35/51"/></div>
+        <div class="hla-group"><label>HLA-DR</label><input id="hla-dr" type="text" placeholder="예: 4, 15  또는  4/15"/></div>
+        <div class="hla-group"><label>HLA-DQ</label><input id="hla-dq" type="text" placeholder="예: 7, 8  또는  7/8"/></div>
+      </div>
+      <p class="hla-hint">💡 쉼표(,) 또는 슬래시(/)로 구분 가능합니다. 예: A칸에 <b>2/24</b> 또는 <b>2, 24</b> 입력 → A2, A24로 처리</p>
     </div>
 
-    <!-- 이력 상세보기 모달 -->
-    <div id="snapshotModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#4472c4;">
-                <span id="snapshotModalTitle">📋 이력 상세보기</span>
-                <button class="close-btn" onclick="closeSnapshotModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="snapshotModalBody"></div>
-        </div>
+    <div class="card">
+      <div class="card-title">🩺 Recipient DSA 분석</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-name">이름</th>
+              <th class="col-pra">PRA</th>
+              <th class="col-flag">DSA 여부</th>
+              <th class="col-result">DSA (항목)</th>
+              <th class="col-del"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btn-analyze">▶ 분석 실행</button>
+        <button class="btn btn-secondary" id="btn-add">＋ Recipient 추가</button>
+        <button class="btn btn-success" id="btn-export">⬇ Excel 내보내기</button>
+        <button class="btn btn-danger" id="btn-reset">↺ 초기화</button>
+      </div>
+      <p class="note">💾 입력 내용은 자동 저장되어 모든 사용자와 공유됩니다.</p>
     </div>
+  </main>
 
-    <!-- PRA 상세 정보 모달 (인라인 버튼 클릭 시) -->
-    <div id="praModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#4472c4;">
-                <span>📋 PRA 상세 정보</span>
-                <button class="close-btn" onclick="closePraModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="praModalBody"></div>
-        </div>
+  <div class="pw-chg-section">
+    <button class="pw-chg-toggle" id="pw-chg-toggle">🔑 비밀번호 변경 <span id="pw-arrow">▼</span></button>
+    <div class="pw-chg-body" id="pw-chg-body">
+      <div class="pw-chg-fields">
+        <input id="pw-cur" type="password" placeholder="현재 비밀번호"/>
+        <input id="pw-new" type="password" placeholder="새 비밀번호"/>
+        <input id="pw-con" type="password" placeholder="새 비밀번호 확인"/>
+        <button class="btn-pw-save" id="btn-pw-save">변경</button>
+      </div>
+      <div id="pw-chg-msg"></div>
     </div>
-
-    <!-- DSA 전체 목록 팝업 모달 -->
-    <div id="dsaModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>⚠️ DSA 양성 수혜자 목록</span>
-                <button class="close-btn" onclick="closeDSAModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="dsaModalBody">
-                <!-- JavaScript로 동적 생성 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- DSA 개별 상세 정보 팝업 모달 -->
-    <div id="dsaDetailModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>🔍 DSA 상세 정보</span>
-                <button class="close-btn" onclick="closeDSADetailModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="dsaDetailModalBody">
-                <!-- JavaScript로 동적 생성 -->
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-    <script>
-        // ===== Supabase 설정 =====
-        const SUPABASE_URL = 'https://nzexffbacnevglcklaln.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56ZXhmZmJhY25ldmdsY2tsYWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODgyNjUsImV4cCI6MjA5MTc2NDI2NX0.acsHs1hAp4dNXNvG-d3PtMJYya11L6rXJPr9PXaw2BM';
-
-        const sbHeaders = {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Prefer': 'return=representation'
-        };
-
-        async function sbFetch(path, options = {}) {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-                ...options,
-                headers: { ...sbHeaders, ...(options.headers || {}) }
-            });
-            if (!res.ok) {
-                const err = await res.text();
-                throw new Error(err);
-            }
-            // 204 No Content
-            if (res.status === 204) return [];
-            return res.json();
-        }
-        // ==========================
-
-        // 🔒 비밀번호 보호 (Supabase 기반)
-        async function initAuth() {
-            const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
-            if (isAuthenticated) return true;
-
-            const userPassword = prompt("🔐 비밀번호를 입력하세요:");
-            if (userPassword === null) { showAuthError(); return false; }
-
-            try {
-                const data = await sbFetch('app_config?key=eq.password&select=value');
-                const correctPw = data.length > 0 ? data[0].value : '123';
-                if (userPassword !== correctPw) { showAuthError(); return false; }
-            } catch(e) {
-                if (userPassword !== '123') { showAuthError(); return false; }
-            }
-
-            sessionStorage.setItem('authenticated', 'true');
-            return true;
-        }
-
-        function showAuthError() {
-            document.body.innerHTML = `
-                <div style="display:flex;justify-content:center;align-items:center;height:100vh;
-                            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-                            font-family:'Segoe UI',sans-serif;">
-                    <div style="background:white;padding:50px;border-radius:20px;
-                                box-shadow:0 10px 30px rgba(0,0,0,0.3);text-align:center;">
-                        <div style="font-size:80px;margin-bottom:20px;">🔒</div>
-                        <h1 style="color:#e74c3c;margin-bottom:15px;">접근 권한이 없습니다</h1>
-                        <p style="color:#7f8c8d;font-size:18px;">올바른 비밀번호를 입력해주세요.</p>
-                        <button onclick="location.reload()"
-                                style="margin-top:30px;padding:15px 40px;background:#667eea;
-                                       color:white;border:none;border-radius:10px;
-                                       font-size:16px;cursor:pointer;font-weight:600;">
-                            다시 시도
-                        </button>
-                    </div>
-                </div>`;
-        }
-
-        // 비밀번호 변경 (Supabase 저장)
-        function togglePwSection() {
-            const section = document.getElementById('pwSection');
-            const arrow = document.getElementById('pwArrow');
-            const isOpen = section.style.display !== 'none';
-            section.style.display = isOpen ? 'none' : 'block';
-            arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-        }
-
-        async function changePassword() {
-            const current = document.getElementById('pwCurrent').value;
-            const newPw = document.getElementById('pwNew').value;
-            const confirm = document.getElementById('pwConfirm').value;
-
-            ['pwError1','pwError2','pwError3','pwSuccess'].forEach(id =>
-                document.getElementById(id).style.display = 'none');
-
-            if (!newPw) { document.getElementById('pwError3').style.display = 'block'; return; }
-            if (newPw !== confirm) { document.getElementById('pwError2').style.display = 'block'; return; }
-
-            try {
-                const data = await sbFetch('app_config?key=eq.password&select=value');
-                const correctPw = data.length > 0 ? data[0].value : '123';
-                if (current !== correctPw) { document.getElementById('pwError1').style.display = 'block'; return; }
-
-                await sbFetch('app_config?key=eq.password', {
-                    method: 'PATCH',
-                    body: JSON.stringify({ value: newPw })
-                });
-
-                document.getElementById('pwCurrent').value = '';
-                document.getElementById('pwNew').value = '';
-                document.getElementById('pwConfirm').value = '';
-                document.getElementById('pwSuccess').style.display = 'block';
-            } catch(e) {
-                alert('비밀번호 변경에 실패했습니다.');
-            }
-        }
-        let dsaPositiveRecipients = [];
-        let manualOrder = null; // 수동 순서 오버라이드 (dbId 배열)
-        let lastDonorKey = ''; // 기증자 정보 변경 감지용
-
-        // 기증자 정보 키 생성
-        function getDonorKey() {
-            const g = document.querySelector("input[name='donorGender']:checked").value;
-            const h = document.getElementById("donorHeight").value;
-            const b = document.getElementById("donorBloodType").value;
-            const a = document.getElementById("donorHLA_A").value;
-            const hb = document.getElementById("donorHLA_B").value;
-            const dr = document.getElementById("donorHLA_DR").value;
-            const dq = document.getElementById("donorHLA_DQ").value;
-            return `${g}|${h}|${b}|${a}|${hb}|${dr}|${dq}`;
-        }
-
-        // Supabase에서 수혜자 목록 불러오기
-        async function loadRecipients() {
-            try {
-                const data = await sbFetch('recipients?select=*&order=order_index.asc&limit=1000');
-                recipients = data.map(r => {
-                    const rawPra = r.pra_antibodies ? r.pra_antibodies : '';
-                    const cleanPra = rawPra
-                        .replace(/\r\n/g, '\n')
-                        .replace(/\r/g, '\n')
-                        .split('\n')
-                        .map(line => line.trim())
-                        .filter(line => line !== '')
-                        .join('\n');
-                    return {
-                        id: r.recipient_name ? r.recipient_name.trim() : '',
-                        gender: r.gender ? r.gender.trim() : '',
-                        height: r.height,
-                        bloodType: r.bloodType ? r.bloodType.trim() : '',
-                        praAntibodies: cleanPra,
-                        dbId: r.id,
-                        orderIndex: r.order_index
-                    };
-                });
-                renderRecipients();
-            } catch (error) {
-                console.error('수혜자 목록 로드 실패:', error);
-                showSuccessMessage('데이터를 불러오는데 실패했습니다.');
-            }
-        }
-
-        // Supabase에 수혜자 목록 저장 (전체 교체)
-        async function saveRecipientsToServer(newRecipients) {
-            try {
-                // 기존 전체 삭제
-                await sbFetch('recipients?id=neq.00000000-0000-0000-0000-000000000000', {
-                    method: 'DELETE'
-                });
-
-                // 새로 삽입
-                if (newRecipients.length > 0) {
-                    const rows = newRecipients.map((r, index) => ({
-                        recipient_name: r.id ? r.id.trim() : '',
-                        gender: r.gender ? r.gender.trim() : '',
-                        height: r.height,
-                        bloodType: r.bloodType ? r.bloodType.trim() : '',
-                        pra_antibodies: r.praAntibodies ? r.praAntibodies.trim() : '',
-                        order_index: index + 1
-                    }));
-                    await sbFetch('recipients', {
-                        method: 'POST',
-                        body: JSON.stringify(rows)
-                    });
-                }
-
-                await loadRecipients();
-                showSuccessMessage('수혜자 목록이 저장되었습니다.');
-            } catch (error) {
-                console.error('수혜자 목록 저장 실패:', error);
-                showSuccessMessage('데이터 저장에 실패했습니다.');
-            }
-        }
-
-        // PRA 항체 파싱 (Strong/Moderate/Mild/Weak 형식)
-        function parsePRAWithStrength(praString) {
-            if (!praString) return [];
-            
-            const results = [];
-            
-            // "Moderate A11, Cw18\nMild Cw15\nWeak Cw17" 형식 파싱
-            const lines = praString.split(/[\r\n]+/);
-            
-            let currentStrength = 'Moderate'; // 기본값
-            
-            for (const line of lines) {
-                const trimmedLine = line.trim();
-                if (!trimmedLine) continue;
-                
-                // 강도 키워드 확인
-                if (trimmedLine.toLowerCase().startsWith('strong')) {
-                    currentStrength = 'Strong';
-                    const alleles = trimmedLine.replace(/^strong\s*/i, '').trim();
-                    parseAlleles(alleles, currentStrength, results);
-                } else if (trimmedLine.toLowerCase().startsWith('moderate')) {
-                    currentStrength = 'Moderate';
-                    const alleles = trimmedLine.replace(/^moderate\s*/i, '').trim();
-                    parseAlleles(alleles, currentStrength, results);
-                } else if (trimmedLine.toLowerCase().startsWith('mild')) {
-                    currentStrength = 'Mild';
-                    const alleles = trimmedLine.replace(/^mild\s*/i, '').trim();
-                    parseAlleles(alleles, currentStrength, results);
-                } else if (trimmedLine.toLowerCase().startsWith('weak')) {
-                    currentStrength = 'Weak';
-                    const alleles = trimmedLine.replace(/^weak\s*/i, '').trim();
-                    parseAlleles(alleles, currentStrength, results);
-                } else {
-                    // 키워드 없이 항체만 나열된 경우
-                    parseAlleles(trimmedLine, currentStrength, results);
-                }
-            }
-            
-            return results;
-        }
-        
-        function parseAlleles(allelesString, strength, results) {
-            if (!allelesString) return;
-            
-            // 쉼표로 구분된 항체 추출
-            const alleles = allelesString.split(',').map(s => s.trim()).filter(s => s);
-            
-            for (const allele of alleles) {
-                // HLA 형식 정규화 (A2, DR11, DQ7 등)
-                const normalized = allele.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                if (normalized) {
-                    results.push({
-                        allele: normalized,
-                        strength: strength
-                    });
-                }
-            }
-        }
-
-        // HLA 타이핑 파싱 함수
-        function parseHLATyping(input, locus) {
-            if (!input) return [];
-            
-            // , 와 / 둘 다 구분자로 허용
-            const parts = input.split(/[,\/]/).map(s => s.trim()).filter(s => s);
-            
-            return parts.map(part => {
-                if (part.toUpperCase().startsWith(locus.toUpperCase())) {
-                    return part.toUpperCase();
-                }
-                return (locus + part).toUpperCase();
-            });
-        }
-
-        // Donor HLA 타이핑 가져오기
-        function getDonorHLATyping() {
-            const hlaA = parseHLATyping(document.getElementById('donorHLA_A').value, 'A');
-            const hlaB = parseHLATyping(document.getElementById('donorHLA_B').value, 'B');
-            const hlaDR = parseHLATyping(document.getElementById('donorHLA_DR').value, 'DR');
-            const hlaDQ = parseHLATyping(document.getElementById('donorHLA_DQ').value, 'DQ');
-            
-            return [...hlaA, ...hlaB, ...hlaDR, ...hlaDQ];
-        }
-
-        // DSA 탐지 함수 (정확한 매칭만)
-        function detectDSA(donorHLA, recipientPRAString) {
-            if (!donorHLA || donorHLA.length === 0) return [];
-            if (!recipientPRAString || recipientPRAString.trim() === '') return [];
-
-            const praAntibodies = parsePRAWithStrength(recipientPRAString);
-
-            const matches = [];
-            for (const donorAllele of donorHLA) {
-                for (const pra of praAntibodies) {
-                    // 정확한 매칭만: A2는 A2만, A24는 A24만
-                    if (donorAllele === pra.allele) {
-                        matches.push({
-                            donor: donorAllele,
-                            antibody: pra.allele,
-                            strength: pra.strength
-                        });
-                    }
-                }
-            }
-
-            return matches;
-        }
-
-        function calculateTLC(heightCm, gender) {
-            if (!heightCm || heightCm <= 0) {
-                return 0;
-            }
-            const heightM = heightCm / 100;
-            if (gender === "남자") {
-                return (7.99 * heightM - 7.08) * 1000;
-            }
-            return (6.6 * heightM - 5.79) * 1000;
-        }
-
-        function formatNumber(value, digits = 1) {
-            return Number(value).toFixed(digits);
-        }
-
-        function isBloodCompatible(donorType, recipientType) {
-            const compatibilityMap = {
-                O: ["O", "A", "B", "AB"],
-                A: ["A", "AB"],
-                B: ["B", "AB"],
-                AB: ["AB"]
-            };
-            return (compatibilityMap[donorType] || []).includes(recipientType);
-        }
-
-        function renderRecipients() {
-            const tableBody = document.getElementById("recipientTable");
-            tableBody.innerHTML = "";
-
-            const donorGender = document.querySelector("input[name='donorGender']:checked").value;
-            const donorHeight = Number(document.getElementById("donorHeight").value);
-            const donorBloodType = document.getElementById("donorBloodType").value;
-            const donorTLC = calculateTLC(donorHeight, donorGender);
-            const donorHLA = getDonorHLATyping();
-
-            document.getElementById("donorTLC").textContent = formatNumber(donorTLC, 1);
-
-            // 기증자 정보 변경 감지 → 변경되면 수동 순서 초기화
-            const currentDonorKey = getDonorKey();
-            if (currentDonorKey !== lastDonorKey) {
-                lastDonorKey = currentDonorKey;
-                manualOrder = null; // 자동 정렬 모드로 복귀
-            }
-
-            dsaPositiveRecipients = [];
-
-            const recipientsWithCompatibility = recipients.map((recipient, originalIndex) => {
-                const recipientTLC = calculateTLC(recipient.height, recipient.gender);
-                const ratio = donorTLC > 0 && recipientTLC > 0 ? donorTLC / recipientTLC : 0;
-                const bloodOk = isBloodCompatible(donorBloodType, recipient.bloodType);
-                const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
-                const hasDSA = dsaMatches.length > 0;
-
-                if (hasDSA) {
-                    dsaPositiveRecipients.push({ recipient, matches: dsaMatches, recipientTLC, ratio });
-                }
-
-                return { ...recipient, recipientTLC, ratio, bloodOk, hasDSA, dsaMatches, originalIndex };
-            });
-
-            let ordered;
-            if (manualOrder) {
-                // 수동 순서 적용
-                const map = new Map(recipientsWithCompatibility.map(r => [r.dbId, r]));
-                ordered = manualOrder.map(id => map.get(id)).filter(Boolean);
-                // manualOrder에 없는 항목은 뒤에 추가
-                recipientsWithCompatibility.forEach(r => {
-                    if (!manualOrder.includes(r.dbId)) ordered.push(r);
-                });
-            } else {
-                // 자동 그룹 정렬: 혈액형맞음+DSA빨강 → 혈액형맞음초록 → 혈액형불일치회색(DSA 있어도)
-                const dsaGroup = recipientsWithCompatibility.filter(r => r.bloodOk && r.hasDSA);
-                const compatGroup = recipientsWithCompatibility.filter(r => r.bloodOk && !r.hasDSA);
-                const incompatGroup = recipientsWithCompatibility.filter(r => !r.bloodOk);
-                ordered = [...dsaGroup, ...compatGroup, ...incompatGroup];
-            }
-
-            ordered.forEach(recipient => {
-                const row = createRecipientRow(recipient, recipient.bloodOk, recipient.hasDSA, ordered);
-                tableBody.appendChild(row);
-            });
-            window._currentOrdered = ordered;
-
-            // SortableJS 초기화 (드래그앤드롭)
-            if (window._sortable) window._sortable.destroy();
-            window._sortable = new Sortable(tableBody, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                forceFallback: true,
-                fallbackTolerance: 5,
-                delay: 100,
-                delayOnTouchOnly: true,
-                onEnd: function(evt) {
-                    if (evt.oldIndex === evt.newIndex) return;
-                    const newOrdered = [...window._currentOrdered];
-                    const moved = newOrdered.splice(evt.oldIndex, 1)[0];
-                    newOrdered.splice(evt.newIndex, 0, moved);
-                    manualOrder = newOrdered.map(r => r.dbId);
-                    window._currentOrdered = newOrdered;
-                    renderRecipients();
-                }
-            });
-        }
-
-        // 순서 조정: manualOrder 배열로 관리
-        function moveRecipient(dbId, direction, currentOrdered) {
-            // 현재 표시 순서 기준으로 manualOrder 초기화
-            if (!manualOrder) {
-                manualOrder = currentOrdered.map(r => r.dbId);
-            }
-            const idx = manualOrder.indexOf(dbId);
-            if (idx === -1) return;
-            const swapIdx = idx + direction;
-            if (swapIdx < 0 || swapIdx >= manualOrder.length) return;
-            [manualOrder[idx], manualOrder[swapIdx]] = [manualOrder[swapIdx], manualOrder[idx]];
-            renderRecipients();
-        }
-
-        function createRecipientRow(recipient, isBloodCompatible, hasDSA, ordered) {
-            const row = document.createElement("tr");
-            
-            if (!isBloodCompatible) {
-                row.className = "blood-incompatible-row";
-            } else if (hasDSA) {
-                row.className = "dsa-positive-row";
-            } else {
-                row.className = "blood-compatible-row";
-            }
-
-            // 순서 버튼 - ordered 배열 기준
-            const orderedIds = ordered ? ordered.map(r => r.dbId) : [];
-            const currentIdx = orderedIds.indexOf(recipient.dbId);
-            const upDisabled = currentIdx <= 0 ? 'disabled' : '';
-            const downDisabled = currentIdx >= orderedIds.length - 1 ? 'disabled' : '';
-            const orderedJson = JSON.stringify(orderedIds).replace(/"/g, '&quot;');
-            const orderCell = `
-                <td class="order-cell">
-                    <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
-                </td>`;
-
-            // DSA 인라인 표시 - 혈액형 불일치면 DSA 있어도 표시 안 함
-            let dsaCell = '';
-            if (hasDSA && isBloodCompatible) {
-                const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
-                recipient.dsaMatches.forEach(m => {
-                    if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody);
-                });
-                const strengths = ['Strong','Moderate','Mild','Weak'];
-                // JSON 직렬화 - praAntibodies 포함 확인
-                const recipientJson = JSON.stringify({
-                    id: recipient.id,
-                    gender: recipient.gender,
-                    height: recipient.height,
-                    bloodType: recipient.bloodType,
-                    praAntibodies: recipient.praAntibodies || ''
-                }).replace(/"/g, '&quot;');
-
-                let rows = strengths
-                    .filter(s => byStrength[s].length > 0)
-                    .map(s => `<div class="dsa-strength-row" style="cursor:pointer;" onclick="event.stopPropagation();showPraModal(JSON.parse(this.closest('td').dataset.recipient))">
-                        <span class="dsa-strength-label ${s}">${s}</span>
-                        <span class="dsa-alleles">${byStrength[s].join(', ')}</span>
-                    </div>`).join('');
-
-                dsaCell = `<td class="dsa-inline-cell" data-recipient="${recipientJson}" style="cursor:pointer;" onclick="event.stopPropagation();showPraModal(JSON.parse(this.dataset.recipient))">
-                    ${rows}
-                </td>`;
-            } else {
-                dsaCell = `<td style="color:#27ae60;font-weight:600;">-</td>`;
-            }
-
-            row.innerHTML = `
-                <td style="white-space:nowrap;">${recipient.id}</td>
-                <td>${recipient.gender === '남자' ? '남' : '여'}</td>
-                <td>${recipient.height}</td>
-                <td>${recipient.bloodType}</td>
-                <td>${formatNumber(recipient.recipientTLC, 1)}</td>
-                <td>${formatNumber(recipient.ratio, 2)}</td>
-                ${dsaCell}
-                ${orderCell}
-            `;
-            return row;
-        }
-
-        // PRA 전체보기 모달
-        function showPraModal(recipient) {
-            const donorGender = document.querySelector("input[name='donorGender']:checked").value;
-            const donorHeight = Number(document.getElementById("donorHeight").value);
-            const donorHLA = getDonorHLATyping();
-            const donorTLC = calculateTLC(donorHeight, donorGender);
-            const recipientTLC = calculateTLC(recipient.height, recipient.gender);
-            const ratio = donorTLC > 0 && recipientTLC > 0 ? donorTLC / recipientTLC : 0;
-            const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
-
-            const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
-            dsaMatches.forEach(m => { if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody); });
-
-            const riskMap = {
-                Strong: '🔴 Very High Risk',
-                Moderate: '🟠 High Risk',
-                Mild: '🟡 Moderate Risk',
-                Weak: '🟡 Low Risk'
-            };
-            const topStrength = ['Strong','Moderate','Mild','Weak'].find(s => byStrength[s].length > 0);
-
-            let html = `
-                <div class="dsa-detail-box">
-                    <h3>🔴 ${recipient.id}</h3>
-                    <div class="dsa-info-row"><span class="dsa-info-label">성별:</span><span class="dsa-info-value">${recipient.gender}</span></div>
-                    <div class="dsa-info-row"><span class="dsa-info-label">키:</span><span class="dsa-info-value">${recipient.height} cm</span></div>
-                    <div class="dsa-info-row"><span class="dsa-info-label">혈액형:</span><span class="dsa-info-value">${recipient.bloodType}형</span></div>
-                    <div class="dsa-info-row"><span class="dsa-info-label">수혜자 TLC:</span><span class="dsa-info-value">${formatNumber(recipientTLC,1)} mL</span></div>
-                    <div class="dsa-info-row"><span class="dsa-info-label">D/R 비율:</span><span class="dsa-info-value">${formatNumber(ratio,2)}</span></div>
-                </div>
-                <div style="margin:15px 0;padding:15px;background:#e8f5e9;border-left:4px solid #4caf50;border-radius:5px;">
-                    <strong style="color:#2e7d32;">📋 수혜자 PRA 전체 정보:</strong>
-                    <pre style="margin-top:10px;padding:12px;background:white;border-radius:5px;overflow-x:auto;white-space:pre-wrap;word-wrap:break-word;font-size:0.9em;line-height:1.6;color:#333;">${recipient.praAntibodies || '(PRA 정보 없음)'}</pre>
-                </div>
-                <div class="antibody-match-detail">
-                    <h4>⚠️ 매칭된 DSA (${dsaMatches.length}개)</h4>`;
-
-            ['Strong','Moderate','Mild','Weak'].forEach(s => {
-                if (byStrength[s].length === 0) return;
-                const colors = { Strong:'#ffcccc', Moderate:'#ffe0b2', Mild:'#fff8e1', Weak:'#fffde7' };
-                const textColors = { Strong:'#d32f2f', Moderate:'#ff9800', Mild:'#ffc107', Weak:'#ffeb3b' };
-                const icons = { Strong:'🔴', Moderate:'🟠', Mild:'🟡', Weak:'🟡' };
-                html += `<div style="margin-top:15px;padding:12px;background:${colors[s]};border-radius:8px;">
-                    <strong style="color:${textColors[s]};font-size:1.1em;">${icons[s]} ${s}</strong>
-                    <div style="margin-top:8px;font-size:1.05em;color:#333;">${byStrength[s].join(', ')}</div>
-                </div>`;
-            });
-
-            html += `</div>
-                <div style="margin-top:20px;padding:15px;background:#fff3cd;border-left:4px solid #ffc107;border-radius:5px;">
-                    <strong style="color:#856404;">⚠️ 거부반응 위험도:</strong>
-                    <p style="margin-top:8px;color:#856404;line-height:1.5;">
-                        ${topStrength ? riskMap[topStrength] : ''}<br>이식 후 급성 또는 만성 거부반응의 위험이 있습니다.
-                    </p>
-                </div>`;
-
-            document.getElementById('praModalBody').innerHTML = html;
-            document.getElementById('praModal').style.display = 'block';
-        }
-
-        function closePraModal() {
-            document.getElementById('praModal').style.display = 'none';
-        }
-
-        // DSA 전체 목록 모달 표시
-        function showDSAModal() {
-            if (dsaPositiveRecipients.length === 0) return;
-
-            const modal = document.getElementById('dsaModal');
-            const modalBody = document.getElementById('dsaModalBody');
-
-            let html = '<ul class="dsa-list">';
-            
-            dsaPositiveRecipients.forEach(item => {
-                const matchesText = item.matches.map(m => 
-                    `Donor <span class="antibody-match">${m.donor}</span> ↔ PRA <span class="antibody-match">${m.antibody}</span> <span class="strength-badge strength-${m.strength}">${m.strength}</span>`
-                ).join('<br>');
-
-                html += `
-                    <li class="dsa-list-item" onclick='showDSADetailModalFromList(${JSON.stringify(item.recipient)})'>
-                        <h4>🔴 ${item.recipient.id} (${item.recipient.gender}, ${item.recipient.bloodType}형)</h4>
-                        <div class="antibody-list">
-                            <strong>매칭된 항체:</strong><br>
-                            ${matchesText}
-                        </div>
-                        <div style="margin-top: 10px; color: #999; font-size: 0.9em;">클릭하여 상세 정보 확인</div>
-                    </li>
-                `;
-            });
-
-            html += '</ul>';
-            modalBody.innerHTML = html;
-            modal.style.display = 'block';
-        }
-
-        // DSA 개별 상세 정보 모달 표시
-        function showDSADetailModal(recipient) {
-            const modal = document.getElementById('dsaDetailModal');
-            const modalBody = document.getElementById('dsaDetailModalBody');
-
-            const donorGender = document.querySelector("input[name='donorGender']:checked").value;
-            const donorHeight = Number(document.getElementById("donorHeight").value);
-            const donorBloodType = document.getElementById("donorBloodType").value;
-            const donorHLA = getDonorHLATyping();
-
-            const recipientTLC = calculateTLC(recipient.height, recipient.gender);
-            const donorTLC = calculateTLC(donorHeight, donorGender);
-            const ratio = donorTLC > 0 && recipientTLC > 0 ? donorTLC / recipientTLC : 0;
-
-            const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
-
-            // 강도별로 분류
-            const strongMatches = dsaMatches.filter(m => m.strength === 'Strong');
-            const moderateMatches = dsaMatches.filter(m => m.strength === 'Moderate');
-            const mildMatches = dsaMatches.filter(m => m.strength === 'Mild');
-            const weakMatches = dsaMatches.filter(m => m.strength === 'Weak');
-
-            let html = `
-                <div class="dsa-detail-box">
-                    <h3>🔴 ${recipient.id}</h3>
-                    
-                    <div class="dsa-info-row">
-                        <span class="dsa-info-label">성별:</span>
-                        <span class="dsa-info-value">${recipient.gender}</span>
-                    </div>
-                    <div class="dsa-info-row">
-                        <span class="dsa-info-label">키:</span>
-                        <span class="dsa-info-value">${recipient.height} cm</span>
-                    </div>
-                    <div class="dsa-info-row">
-                        <span class="dsa-info-label">혈액형:</span>
-                        <span class="dsa-info-value">${recipient.bloodType}형</span>
-                    </div>
-                    <div class="dsa-info-row">
-                        <span class="dsa-info-label">수혜자 TLC:</span>
-                        <span class="dsa-info-value">${formatNumber(recipientTLC, 1)} mL</span>
-                    </div>
-                    <div class="dsa-info-row">
-                        <span class="dsa-info-label">D/R 비율:</span>
-                        <span class="dsa-info-value">${formatNumber(ratio, 2)}</span>
-                    </div>
-
-                    <div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 5px;">
-                        <strong style="color: #2e7d32;">📋 수혜자 PRA 전체 정보:</strong>
-                        <pre style="margin-top: 10px; padding: 12px; background: white; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; line-height: 1.6; color: #333;">${recipient.praAntibodies || '(PRA 정보 없음)'}</pre>
-                    </div>
-
-                    <div class="antibody-match-detail">
-                        <h4>⚠️ 매칭된 DSA (${dsaMatches.length}개)</h4>
-            `;
-
-            if (strongMatches.length > 0) {
-                const antibodies = strongMatches.map(m => m.antibody).join(', ');
-                html += `
-                    <div style="margin-top: 15px; padding: 12px; background: #ffcccc; border-radius: 8px;">
-                        <strong style="color: #d32f2f; font-size: 1.1em;">🔴 Strong</strong>
-                        <div style="margin-top: 8px; font-size: 1.05em; color: #333;">${antibodies}</div>
-                    </div>
-                `;
-            }
-
-            if (moderateMatches.length > 0) {
-                const antibodies = moderateMatches.map(m => m.antibody).join(', ');
-                html += `
-                    <div style="margin-top: 15px; padding: 12px; background: #ffe0b2; border-radius: 8px;">
-                        <strong style="color: #ff9800; font-size: 1.1em;">🟠 Moderate</strong>
-                        <div style="margin-top: 8px; font-size: 1.05em; color: #333;">${antibodies}</div>
-                    </div>
-                `;
-            }
-
-            if (mildMatches.length > 0) {
-                const antibodies = mildMatches.map(m => m.antibody).join(', ');
-                html += `
-                    <div style="margin-top: 15px; padding: 12px; background: #fff8e1; border-radius: 8px;">
-                        <strong style="color: #ffc107; font-size: 1.1em;">🟡 Mild</strong>
-                        <div style="margin-top: 8px; font-size: 1.05em; color: #333;">${antibodies}</div>
-                    </div>
-                `;
-            }
-
-            if (weakMatches.length > 0) {
-                const antibodies = weakMatches.map(m => m.antibody).join(', ');
-                html += `
-                    <div style="margin-top: 15px; padding: 12px; background: #fffde7; border-radius: 8px;">
-                        <strong style="color: #ffeb3b; font-size: 1.1em;">🟡 Weak</strong>
-                        <div style="margin-top: 8px; font-size: 1.05em; color: #333;">${antibodies}</div>
-                    </div>
-                `;
-            }
-
-            html += `
-                    </div>
-
-                    <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
-                        <strong style="color: #856404;">⚠️ 거부반응 위험도:</strong>
-                        <p style="margin-top: 8px; color: #856404; line-height: 1.5;">
-                            ${strongMatches.length > 0 ? '🔴 <strong>Very High Risk</strong>: Strong DSA 보유' : ''}
-                            ${moderateMatches.length > 0 && strongMatches.length === 0 ? '🟠 <strong>High Risk</strong>: Moderate DSA 보유' : ''}
-                            ${mildMatches.length > 0 && strongMatches.length === 0 && moderateMatches.length === 0 ? '🟡 <strong>Moderate Risk</strong>: Mild DSA 보유' : ''}
-                            ${weakMatches.length > 0 && strongMatches.length === 0 && moderateMatches.length === 0 && mildMatches.length === 0 ? '🟡 <strong>Low Risk</strong>: Weak DSA만 보유' : ''}
-                            <br>이식 후 급성 또는 만성 거부반응의 위험이 있습니다.
-                        </p>
-                    </div>
-                </div>
-            `;
-
-            modalBody.innerHTML = html;
-            modal.style.display = 'block';
-        }
-
-        // 전체 목록에서 상세 정보로 이동
-        function showDSADetailModalFromList(recipient) {
-            closeDSAModal();
-            setTimeout(() => showDSADetailModal(recipient), 300);
-        }
-
-        function closeDSAModal() {
-            document.getElementById('dsaModal').style.display = 'none';
-        }
-
-        function closeDSADetailModal() {
-            document.getElementById('dsaDetailModal').style.display = 'none';
-        }
-
-        window.onclick = function(event) {
-            const modal1 = document.getElementById('dsaModal');
-            const modal2 = document.getElementById('dsaDetailModal');
-            const modal3 = document.getElementById('praModal');
-            const modal4 = document.getElementById('snapshotModal');
-            if (event.target === modal1) closeDSAModal();
-            if (event.target === modal2) closeDSADetailModal();
-            if (event.target === modal3) closePraModal();
-            if (event.target === modal4) closeSnapshotModal();
-        }
-
-        function downloadTemplate() {
-            const headerRow = ["id", "gender", "height", "bloodType", "pra_antibodies"];
-            const dataRows = recipients.map(r => [r.id, r.gender, r.height, r.bloodType, r.praAntibodies || '']);
-            
-            if (dataRows.length === 0) {
-                dataRows.push(["환자1", "남자", 170, "A", "Moderate A11, Cw18\nMild Cw15\nWeak Cw17"]);
-                dataRows.push(["환자2", "여자", 160, "O", "Strong DR11\nModerate DR13\nMild DR8\nWeak DQ2"]);
-                dataRows.push(["환자3", "남자", 175, "B", ""]);
-            }
-
-            const rows = [headerRow, ...dataRows];
-            const worksheet = XLSX.utils.aoa_to_sheet(rows);
-            
-            worksheet['!cols'] = [
-                { wch: 15 },
-                { wch: 10 },
-                { wch: 10 },
-                { wch: 10 },
-                { wch: 35 }
-            ];
-
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "수혜자목록");
-            XLSX.writeFile(workbook, "수혜자_목록_템플릿_PRA포함.xlsx");
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-                const parsed = rows
-                    .map((row) => {
-                        // PRA 텍스트 정리: \r 제거 + 연속 빈 줄 제거 + 앞뒤 공백 제거
-                        const rawPra = (row.pra_antibodies || row.PRA || row["PRA"] || row["항체"] || "").toString();
-                        const cleanPra = rawPra
-                            .replace(/\r\n/g, '\n')   // 윈도우 줄바꿈 통일
-                            .replace(/\r/g, '\n')      // 맥 구형 줄바꿈 통일
-                            .split('\n')
-                            .map(line => line.trim())  // 각 줄 앞뒤 공백 제거
-                            .filter(line => line !== '') // 빈 줄 제거
-                            .join('\n');               // 다시 합치기
-
-                        return {
-                            id: (row.id || row.ID || row["수혜자 ID"] || "").toString().trim(),
-                            gender: (row.gender || row.Gender || row["성별"] || "").toString().trim(),
-                            height: Number(row.height || row.Height || row["키"] || 0),
-                            bloodType: (row.bloodType || row.BloodType || row["혈액형"] || "").toString().trim(),
-                            praAntibodies: cleanPra
-                        };
-                    })
-                    .filter((row) => row.id && row.gender && row.height && row.bloodType);
-
-                if (parsed.length > 0) {
-                    await saveRecipientsToServer(parsed);
-                } else {
-                    showSuccessMessage("데이터를 찾지 못했습니다. 템플릿 형식을 확인해주세요.");
-                }
-            };
-
-            reader.readAsArrayBuffer(file);
-            event.target.value = '';
-        }
-
-        function showSuccessMessage(message) {
-            const successMessage = document.getElementById("successMessage");
-            successMessage.textContent = message;
-            successMessage.style.display = "block";
-            setTimeout(() => {
-                successMessage.style.display = "none";
-            }, 3000);
-        }
-
-        document.querySelectorAll("input[name='donorGender']").forEach((radio) => {
-            radio.addEventListener("change", renderRecipients);
-        });
-        document.getElementById("donorHeight").addEventListener("input", renderRecipients);
-        document.getElementById("donorBloodType").addEventListener("change", renderRecipients);
-        
-        ['donorHLA_A', 'donorHLA_B', 'donorHLA_DR', 'donorHLA_DQ'].forEach(id => {
-            document.getElementById(id).addEventListener("input", renderRecipients);
-        });
-
-        initAuth().then(ok => {
-            if (!ok) return;
-            loadRecipients();
-            loadMemo();
-        });
-
-        // 메모 관련 함수
-        let memoTimer = null;
-
-        function updateMemoCounter() {
-            const memoInput = document.getElementById('memoInput');
-            const memoCounter = document.getElementById('memoCounter');
-            const length = memoInput.value.length;
-            const maxLength = 200;
-            
-            memoCounter.textContent = `${length} / ${maxLength}자`;
-            
-            if (length >= maxLength) {
-                memoCounter.classList.add('warning');
-            } else {
-                memoCounter.classList.remove('warning');
-            }
-            
-            // debounce: 타이핑 멈춘 후 800ms 뒤에만 저장
-            clearTimeout(memoTimer);
-            memoTimer = setTimeout(() => {
-                saveMemo();
-            }, 800);
-        }
-
-        // 결과 텍스트 다운로드
-        function downloadResultText() {
-            if (!window._currentOrdered || window._currentOrdered.length === 0) {
-                alert('목록이 없습니다. 기증자 정보를 먼저 입력해주세요.');
-                return;
-            }
-
-            const donorGender = document.querySelector("input[name='donorGender']:checked").value;
-            const donorHeight = Number(document.getElementById("donorHeight").value);
-            const donorHLA = getDonorHLATyping();
-            const donorTLC = calculateTLC(donorHeight, donorGender);
-
-            const lines = window._currentOrdered
-                .filter(recipient => recipient.bloodOk)  // 혈액형 호환된 경우만
-                .map(recipient => {
-                const ratio = formatNumber(recipient.ratio, 2);
-                const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
-
-                if (dsaMatches.length === 0) {
-                    return `${recipient.id}  ${ratio}`;
-                }
-
-                // DSA 강도별 그룹화
-                const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
-                dsaMatches.forEach(m => {
-                    if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody);
-                });
-
-                const dsaParts = ['Strong', 'Moderate', 'Mild', 'Weak']
-                    .filter(s => byStrength[s].length > 0)
-                    .map(s => `${s} ${byStrength[s].join(', ')}`);
-
-                return `${recipient.id}  ${ratio}  ${dsaParts.join(' / ')}`;
-            });
-
-            // 헤더 추가
-            const donorBloodType = document.getElementById("donorBloodType").value;
-            const now = new Date().toLocaleDateString('ko-KR');
-            const header = [
-                `[폐이식 TLC 계산기 결과]`,
-                `생성일: ${now}`,
-                `기증자: ${donorGender} / ${donorHeight}cm / ${donorBloodType}형 / pTLC ${formatNumber(donorTLC, 1)} mL`,
-                `─────────────────────────`,
-                `이름  D/R  DSA`,
-                `─────────────────────────`,
-            ].join('\n');
-
-            const content = header + '\n' + lines.join('\n');
-
-            // 다운로드
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `TLC_결과_${now.replace(/\./g, '')}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // ===== 이력관리 =====
-        let snapshots = [];
-
-        function toggleSnapshotSection() {
-            const section = document.getElementById('snapshotSection');
-            const arrow = document.getElementById('snapshotArrow');
-            const isOpen = section.style.display !== 'none';
-            section.style.display = isOpen ? 'none' : 'block';
-            arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-            if (!isOpen) loadSnapshots();
-        }
-
-        async function saveSnapshot() {
-            const name = document.getElementById('snapshotName').value.trim();
-            if (!name) { alert('이력 이름을 입력해주세요.'); return; }
-
-            const data = {
-                recipients: recipients.map(r => ({
-                    id: r.id, gender: r.gender, height: r.height,
-                    bloodType: r.bloodType, praAntibodies: r.praAntibodies
-                })),
-                savedAt: new Date().toISOString()
-            };
-
-            try {
-                await sbFetch('snapshots', {
-                    method: 'POST',
-                    body: JSON.stringify({ name, data })
-                });
-                document.getElementById('snapshotName').value = '';
-                showSuccessMessage('이력이 저장되었습니다.');
-                loadSnapshots();
-            } catch(e) {
-                console.error(e);
-                showSuccessMessage('저장 실패: ' + e.message);
-            }
-        }
-
-        async function loadSnapshots() {
-            try {
-                snapshots = await sbFetch('snapshots?select=*&order=created_at.desc');
-                renderSnapshotList();
-            } catch(e) {
-                console.error('이력 로드 실패:', e);
-            }
-        }
-
-        function renderSnapshotList() {
-            const container = document.getElementById('snapshotList');
-            if (snapshots.length === 0) {
-                container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">저장된 이력이 없습니다.</div>';
-                return;
-            }
-            container.innerHTML = snapshots.map(s => {
-                const date = new Date(s.created_at).toLocaleString('ko-KR');
-                const count = s.data?.recipients?.length || 0;
-                return `
-                <div style="border:1px solid #e0e0e0;border-radius:10px;padding:14px;background:#fafafa;display:flex;align-items:center;gap:10px;">
-                    <div style="flex:1;">
-                        <div id="snapshotNameDisplay_${s.id}" style="font-weight:600;color:#2c3e50;font-size:15px;">${s.name}</div>
-                        <div id="snapshotNameEdit_${s.id}" style="display:none;">
-                            <input type="text" id="snapshotNameInput_${s.id}" value="${s.name}" 
-                                style="padding:6px;border:2px solid #4472c4;border-radius:6px;font-size:14px;width:100%;">
-                        </div>
-                        <div style="color:#999;font-size:12px;margin-top:3px;">${date} · 수혜자 ${count}명</div>
-                    </div>
-                    <div style="display:flex;gap:6px;flex-shrink:0;">
-                        <button onclick="viewSnapshot('${s.id}')" 
-                            style="padding:5px 10px;background:#4472c4;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">👁 보기</button>
-                        <button onclick="toggleRenameSnapshot('${s.id}')" id="renameBtn_${s.id}"
-                            style="padding:5px 10px;background:#f39c12;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">✏️ 이름</button>
-                        <button onclick="deleteSnapshot('${s.id}')"
-                            style="padding:5px 10px;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">🗑 삭제</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function toggleRenameSnapshot(id) {
-            const display = document.getElementById(`snapshotNameDisplay_${id}`);
-            const edit = document.getElementById(`snapshotNameEdit_${id}`);
-            const btn = document.getElementById(`renameBtn_${id}`);
-            const isEditing = edit.style.display !== 'none';
-            if (isEditing) {
-                // 저장
-                renameSnapshot(id);
-            } else {
-                display.style.display = 'none';
-                edit.style.display = 'block';
-                btn.textContent = '✅ 저장';
-            }
-        }
-
-        async function renameSnapshot(id) {
-            const input = document.getElementById(`snapshotNameInput_${id}`);
-            const newName = input.value.trim();
-            if (!newName) return;
-            try {
-                await sbFetch(`snapshots?id=eq.${id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ name: newName })
-                });
-                loadSnapshots();
-            } catch(e) {
-                console.error('이름 변경 실패:', e);
-            }
-        }
-
-        async function deleteSnapshot(id) {
-            if (!confirm('이 이력을 삭제하시겠습니까?')) return;
-            try {
-                await sbFetch(`snapshots?id=eq.${id}`, { method: 'DELETE' });
-                loadSnapshots();
-            } catch(e) {
-                console.error('삭제 실패:', e);
-            }
-        }
-
-        function viewSnapshot(id) {
-            const s = snapshots.find(s => s.id === id);
-            if (!s) return;
-            const date = new Date(s.created_at).toLocaleString('ko-KR');
-            document.getElementById('snapshotModalTitle').textContent = `📋 ${s.name}`;
-
-            const rows = (s.data?.recipients || []).map((r, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td>${r.id}</td>
-                    <td>${r.gender}</td>
-                    <td>${r.height}</td>
-                    <td>${r.bloodType}</td>
-                    <td style="font-size:11px;text-align:left;max-width:200px;white-space:pre-wrap;">${r.praAntibodies || '-'}</td>
-                </tr>`).join('');
-
-            document.getElementById('snapshotModalBody').innerHTML = `
-                <div style="margin-bottom:15px;padding:12px;background:#e8f4fd;border-radius:8px;color:#2c3e50;">
-                    <strong>저장일시:</strong> ${date} &nbsp;|&nbsp; <strong>수혜자:</strong> ${s.data?.recipients?.length || 0}명
-                </div>
-                <div style="overflow-x:auto;">
-                <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                    <thead><tr style="background:#4472c4;color:white;">
-                        <th style="padding:8px;">#</th>
-                        <th style="padding:8px;">수혜자 ID</th>
-                        <th style="padding:8px;">성별</th>
-                        <th style="padding:8px;">키</th>
-                        <th style="padding:8px;">혈액형</th>
-                        <th style="padding:8px;">PRA</th>
-                    </tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-                </div>`;
-            document.getElementById('snapshotModal').style.display = 'block';
-        }
-
-        function closeSnapshotModal() {
-            document.getElementById('snapshotModal').style.display = 'none';
-        }
-        // ===== 이력관리 끝 =====
-
-        // Supabase에 메모 저장
-        async function saveMemo() {
-            const content = document.getElementById('memoInput').value;
-            try {
-                const existing = await sbFetch('memo?select=id&limit=1');
-                if (existing.length > 0) {
-                    await sbFetch(`memo?id=eq.${existing[0].id}`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({ content })
-                    });
-                } else {
-                    await sbFetch('memo', {
-                        method: 'POST',
-                        body: JSON.stringify({ content })
-                    });
-                }
-            } catch (error) {
-                console.error('메모 저장 실패:', error);
-            }
-        }
-
-        // Supabase에서 메모 불러오기
-        async function loadMemo() {
-            try {
-                const data = await sbFetch('memo?select=*&limit=1');
-                if (data.length > 0) {
-                    document.getElementById('memoInput').value = data[0].content || '';
-                    updateMemoCounter();
-                }
-            } catch (error) {
-                console.error('메모 로드 실패:', error);
-            }
-        }
-    </script>
+  </div>
+
+  <footer>⚕ DSA Detector — 임상 의사결정 보조 도구입니다. 최종 판단은 전문의에게 확인하십시오.</footer>
+</div>
+
+<script>
+/* ================================================================
+   ★★★ 설정 — 여기 두 줄만 수정하세요 ★★★
+   Supabase > Project Settings > API 에서 복사
+================================================================ */
+const SUPABASE_URL      = 'https://kiuiyczixreveypolhzu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpdWl5Y3ppeHJldmV5cG9saHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODg1NjcsImV4cCI6MjA5MDU2NDU2N30.ol-MpMbaBY84VcKV9JSIL2DlMsE1s2KTJS7Zsc_ITkA';
+
+/* 키 설정 여부 자동 감지 */
+const USE_SB = SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY';
+
+const T_SESS = 'dsa_sessions';
+const T_CFG  = 'dsa_config';
+let sessionId = null, saveTimer = null, histData = [];
+
+const $   = id => document.getElementById(id);
+const esc = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const safeJSON = (s,d) => { try{ return JSON.parse(s)||d; }catch{ return d; } };
+const genId    = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function fmtTime(ms){ if(!ms) return ''; const d=new Date(+ms),p=n=>String(n).padStart(2,'0'); return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+/* ================================================================
+   Supabase REST 헬퍼
+================================================================ */
+const SB = {
+  h(extra={}) {
+    return { 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Prefer':'return=representation', ...extra };
+  },
+  async q(path, opts={}) {
+    const res = await fetch(SUPABASE_URL+'/rest/v1/'+path, { headers:this.h(), ...opts });
+    if(!res.ok) throw new Error(await res.text());
+    const txt = await res.text();
+    return txt ? JSON.parse(txt) : null;
+  },
+  async list(table, qs='')   { return this.q(`${table}?${qs}`, { headers:this.h({'Prefer':''}) }); },
+  async get(table, id)       { const r=await this.list(table,`id=eq.${id}`); return r?.[0]||null; },
+  async insert(table, data)  { const r=await this.q(table,{method:'POST',body:JSON.stringify(data)}); return Array.isArray(r)?r[0]:r; },
+  async update(table, id, d) { const r=await this.q(`${table}?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(d)}); return Array.isArray(r)?r[0]:r; },
+  async upsert(table, data)  { const r=await this.q(table,{method:'POST',headers:this.h({'Prefer':'return=representation,resolution=merge-duplicates'}),body:JSON.stringify(data)}); return Array.isArray(r)?r[0]:r; },
+  async del(table, id)       { await this.q(`${table}?id=eq.${id}`,{method:'DELETE',headers:this.h({'Prefer':''})}); },
+};
+
+/* ================================================================
+   localStorage 폴백 헬퍼
+================================================================ */
+const LS = {
+  all(k)      { return safeJSON(localStorage.getItem(k),[]); },
+  set(k,v)    { localStorage.setItem(k,JSON.stringify(v)); },
+  sessList()  { return [...this.all(T_SESS)].sort((a,b)=>(b.saved_at||0)-(a.saved_at||0)); },
+  sessGet(id) { return this.all(T_SESS).find(r=>r.id===id)||null; },
+  sessSave(d) {
+    if(d.id){ this.set(T_SESS,this.all(T_SESS).map(r=>r.id===d.id?{...r,...d}:r)); return d; }
+    const row={...d,id:genId(),created_at:Date.now()}; const a=this.all(T_SESS); a.unshift(row); this.set(T_SESS,a); return row;
+  },
+  sessDel(id) { this.set(T_SESS,this.all(T_SESS).filter(r=>r.id!==id)); },
+  cfgGet(k)   { return this.all(T_CFG).find(r=>r.id===k)||null; },
+  cfgSet(k,v) { const a=this.all(T_CFG),i=a.findIndex(r=>r.id===k); if(i>=0)a[i].value=v;else a.push({id:k,value:v}); this.set(T_CFG,a); return {id:k,value:v}; },
+};
+
+/* ================================================================
+   통합 DB 어댑터
+================================================================ */
+const DB = {
+  async sessList() {
+    if(USE_SB) return SB.list(T_SESS,'select=*&order=saved_at.desc&limit=100');
+    return LS.sessList();
+  },
+  async sessGet(id) {
+    if(USE_SB) return SB.get(T_SESS,id);
+    return LS.sessGet(id);
+  },
+  async sessSave(data) {
+    if(USE_SB) return data.id ? SB.update(T_SESS,data.id,data) : SB.insert(T_SESS,data);
+    return LS.sessSave(data);
+  },
+  async sessDel(id) {
+    if(USE_SB) return SB.del(T_SESS,id);
+    return LS.sessDel(id);
+  },
+  async getPW() {
+    if(USE_SB){
+      const r=await SB.list(T_CFG,'id=eq.password');
+      if(r?.length) return r[0].value||'123';
+      await SB.insert(T_CFG,{id:'password',value:'123'}); return '123';
+    }
+    const r=LS.cfgGet('password'); return r?r.value:'123';
+  },
+  async setPW(v) {
+    if(USE_SB) return SB.upsert(T_CFG,{id:'password',value:v});
+    return LS.cfgSet('password',v);
+  },
+};
+
+/* ================================================================
+   HLA 파싱 & DSA 탐지
+================================================================ */
+function parseHLATyping(input,locus){
+  if(!input?.trim()) return [];
+  return input.split(/[,\/]/).map(s=>s.trim()).filter(Boolean).map(p=>{
+    const u=p.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    return u ? (u.startsWith(locus.toUpperCase())?u:locus.toUpperCase()+u) : null;
+  }).filter(Boolean);
+}
+function getDonorHLA(){
+  return [...parseHLATyping($('hla-a').value,'A'),...parseHLATyping($('hla-b').value,'B'),...parseHLATyping($('hla-dr').value,'DR'),...parseHLATyping($('hla-dq').value,'DQ')];
+}
+function parsePRAWithStrength(praString){
+  if(!praString) return [];
+  const results=[]; const lines=praString.split(/[\r\n]+/); let cur='Moderate';
+  const kwMap={strong:'Strong',moderate:'Moderate',mild:'Mild',weak:'Weak'};
+  for(const line of lines){
+    const t=line.trim(); if(!t) continue;
+    const m=t.match(/^(strong|moderate|mild|weak)\s*/i);
+    if(m){ cur=kwMap[m[1].toLowerCase()]; parseAlleles(t.slice(m[0].length).trim(),cur,results); }
+    else { parseAlleles(t,cur,results); }
+  }
+  return results;
+}
+function parseAlleles(str,strength,results){
+  if(!str) return;
+  str.split(/[,\/]/).map(s=>s.trim()).filter(Boolean).forEach(a=>{
+    const n=a.toUpperCase().replace(/[^A-Z0-9]/g,''); if(n) results.push({allele:n,strength});
+  });
+}
+function detectDSA(donorHLA,praString){
+  if(!donorHLA?.length||!praString?.trim()) return [];
+  const pra=parsePRAWithStrength(praString); const matches=[];
+  for(const d of donorHLA) for(const p of pra) if(d===p.allele) matches.push({donor:d,antibody:p.allele,strength:p.strength});
+  return matches;
+}
+function groupDSA(matches){
+  const g={Strong:[],Moderate:[],Mild:[],Weak:[]};
+  matches.forEach(m=>{ if(g[m.strength]) g[m.strength].push(m.antibody); });
+  const r=[];
+  if(g.Strong.length)   r.push({cls:'s-strong',   text:'Strong: '+g.Strong.join(', ')});
+  if(g.Moderate.length) r.push({cls:'s-moderate',  text:'Moderate: '+g.Moderate.join(', ')});
+  if(g.Mild.length)     r.push({cls:'s-mild',      text:'Mild: '+g.Mild.join(', ')});
+  if(g.Weak.length)     r.push({cls:'s-weak',      text:'Weak: '+g.Weak.join(', ')});
+  return r;
+}
+
+/* ================================================================
+   Recipient 테이블
+================================================================ */
+function addRow(name,pra){
+  name=name||''; pra=pra||'';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td class="col-name"><input type="text" class="r-name" value="${esc(name)}" placeholder="이름"/></td>
+    <td class="col-pra"><textarea class="r-pra" placeholder="예)\nStrong A2, B35\nModerate DR4\nMild DQ7\n\n또는: A2, B35, DR4">${esc(pra)}</textarea></td>
+    <td class="col-flag"><span class="badge badge-pend">—</span></td>
+    <td class="col-result"><span style="color:#94a3b8;font-size:12px">분석 전</span></td>
+    <td class="col-del"><button class="btn-del" title="삭제">✕</button></td>`;
+  tr.querySelector('.btn-del').addEventListener('click',()=>{ tr.remove(); scheduleSave(); });
+  tr.querySelector('.r-name').addEventListener('input',scheduleSave);
+  tr.querySelector('.r-pra').addEventListener('input',scheduleSave);
+  $('tbody').appendChild(tr); return tr;
+}
+function initRows(n){ for(let i=0;i<n;i++) addRow(); }
+
+function runAnalysis(){
+  const donor=getDonorHLA();
+  if(!donor.length){ alert('Donor HLA Typing을 입력해 주세요.\n\n입력 방법:\n• A칸: 2, 24  (숫자만)\n• A칸: A2, A24  (접두사 포함)\n\nHLA-A, B, DR, DQ 중 하나 이상 입력해야 합니다.'); return; }
+  $('tbody').querySelectorAll('tr').forEach(tr=>{
+    const pra=tr.querySelector('.r-pra').value.trim();
+    const flagTd=tr.querySelector('.col-flag'), resTd=tr.querySelector('.col-result');
+    if(!pra){ flagTd.innerHTML='<span class="badge badge-pend">—</span>'; resTd.innerHTML='<span style="color:#94a3b8;font-size:12px">PRA 없음</span>'; tr.dataset.s='none'; tr.dataset.d='[]'; return; }
+    const matches=detectDSA(donor,pra);
+    if(matches.length>0){
+      flagTd.innerHTML='<span class="badge badge-pos">있음</span>';
+      resTd.innerHTML=groupDSA(matches).map(l=>`<div class="dsa-line ${l.cls}">${esc(l.text)}</div>`).join('');
+      tr.dataset.s='pos'; tr.dataset.d=JSON.stringify(matches);
+    } else {
+      flagTd.innerHTML='<span class="badge badge-neg">없음</span>';
+      resTd.innerHTML='<span class="badge badge-neg">DSA 없음</span>';
+      tr.dataset.s='neg'; tr.dataset.d='[]';
+    }
+  });
+  doSave();
+}
+function resetAll(){ ['hla-a','hla-b','hla-dr','hla-dq'].forEach(id=>$(id).value=''); $('tbody').innerHTML=''; initRows(3); sessionId=null; setStatus('—',''); }
+
+/* ================================================================
+   자동저장
+================================================================ */
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,1500); }
+['hla-a','hla-b','hla-dr','hla-dq'].forEach(id=>$(id).addEventListener('input',scheduleSave));
+
+function collectSession(){
+  const rows=[];
+  $('tbody').querySelectorAll('tr').forEach(tr=>{ rows.push({name:tr.querySelector('.r-name').value.trim(),pra:tr.querySelector('.r-pra').value.trim(),s:tr.dataset.s||'pending',d:tr.dataset.d||'[]'}); });
+  return { ...(sessionId?{id:sessionId}:{}), donor_hla_a:$('hla-a').value.trim(), donor_hla_b:$('hla-b').value.trim(), donor_hla_dr:$('hla-dr').value.trim(), donor_hla_dq:$('hla-dq').value.trim(), recipients:JSON.stringify(rows), saved_at:Date.now() };
+}
+
+async function doSave(){
+  const data=collectSession();
+  const recs=safeJSON(data.recipients,[]);
+  if(!data.donor_hla_a&&!data.donor_hla_b&&!data.donor_hla_dr&&!data.donor_hla_dq&&!recs.some(r=>r.name||r.pra)) return;
+  setStatus('저장 중…','saving');
+  try {
+    const saved=await DB.sessSave(data);
+    sessionId=saved.id;
+    setStatus('✓ 저장됨 · '+fmtTime(Date.now()),'saved');
+    upsertHist(saved);
+  } catch(e){ console.error(e); setStatus('저장 오류','error'); }
+}
+function setStatus(txt,cls){ const el=$('save-status'); el.textContent=txt; el.className=cls||''; }
+
+/* ================================================================
+   이력
+================================================================ */
+async function loadHist(){
+  try{ histData=await DB.sessList(); renderHist(); }
+  catch(e){ showHistErr('불러오기 실패: '+e.message); }
+}
+function showHistErr(msg){ $('hist-list').innerHTML=`<p class="h-empty">${esc(msg)}</p>`; }
+function hlaLabel(s){ const p=[]; if(s.donor_hla_a)p.push('A:'+s.donor_hla_a); if(s.donor_hla_b)p.push('B:'+s.donor_hla_b); if(s.donor_hla_dr)p.push('DR:'+s.donor_hla_dr); if(s.donor_hla_dq)p.push('DQ:'+s.donor_hla_dq); return p.join(' | ')||'(HLA 미입력)'; }
+
+function renderHist(){
+  const el=$('hist-list');
+  if(!histData.length){ el.innerHTML='<p class="h-empty">저장된 내역이 없습니다.</p>'; return; }
+  el.innerHTML=histData.map(s=>{
+    const recs=safeJSON(s.recipients,[]); const dsaCnt=recs.filter(r=>r.s==='pos').length;
+    const active=s.id===sessionId?' active':'';
+    return `<div class="h-item${active}">
+      <div class="h-hla">${esc(hlaLabel(s))}</div>
+      <div class="h-meta"><span>${fmtTime(s.saved_at||s.created_at)}</span><span>수혜자 ${recs.length}명</span>${dsaCnt>0?`<span class="h-dsa">DSA ${dsaCnt}명</span>`:''}</div>
+      <div class="h-btns">
+        <button class="h-btn h-btn-load" onclick="loadSess('${esc(s.id)}')">불러오기</button>
+        <button class="h-btn h-btn-del"  onclick="delSess('${esc(s.id)}')">삭제</button>
+      </div></div>`;
+  }).join('');
+}
+function upsertHist(sess){ const i=histData.findIndex(h=>h.id===sess.id); if(i>=0)histData[i]=sess;else histData.unshift(sess); renderHist(); }
+
+async function loadSess(id){
+  try{ const s=await DB.sessGet(id); if(!s){alert('불러오기 실패');return;} restoreSess(s); closeHist(); }
+  catch(e){ alert('불러오기 오류: '+e.message); }
+}
+function restoreSess(s){
+  $('hla-a').value=$('hla-b').value=$('hla-dr').value=$('hla-dq').value='';
+  $('hla-a').value=s.donor_hla_a||''; $('hla-b').value=s.donor_hla_b||''; $('hla-dr').value=s.donor_hla_dr||''; $('hla-dq').value=s.donor_hla_dq||'';
+  $('tbody').innerHTML='';
+  const recs=safeJSON(s.recipients,[]);
+  if(!recs.length){ initRows(3); }
+  else { recs.forEach(r=>{ const tr=addRow(r.name||'',r.pra||''); tr.dataset.s=r.s||'pending'; tr.dataset.d=r.d||'[]';
+    const ft=tr.querySelector('.col-flag'), rt=tr.querySelector('.col-result');
+    if(r.s==='pos'){ ft.innerHTML='<span class="badge badge-pos">있음</span>'; rt.innerHTML=groupDSA(safeJSON(r.d,[])).map(l=>`<div class="dsa-line ${l.cls}">${esc(l.text)}</div>`).join(''); }
+    else if(r.s==='neg'){ ft.innerHTML='<span class="badge badge-neg">없음</span>'; rt.innerHTML='<span class="badge badge-neg">DSA 없음</span>'; }
+  }); }
+  sessionId=s.id; setStatus('✓ 불러옴 · '+fmtTime(s.saved_at||s.created_at),'saved');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function delSess(id){
+  if(!confirm('이 내역을 삭제하시겠습니까?')) return;
+  try{ await DB.sessDel(id); histData=histData.filter(h=>h.id!==id); if(sessionId===id){sessionId=null;setStatus('—','');} renderHist(); }
+  catch(e){ alert('삭제 오류: '+e.message); }
+}
+function openHist(){ $('hist-panel').classList.add('open'); $('hist-overlay').style.display='block'; loadHist(); }
+function closeHist(){ $('hist-panel').classList.remove('open'); $('hist-overlay').style.display='none'; }
+
+/* ================================================================
+   CSV 내보내기
+================================================================ */
+function exportCSV(){
+  const donor=getDonorHLA();
+  const rows=[['순번','이름','PRA','DSA 여부','Strong','Moderate','Mild','Weak']];
+  $('tbody').querySelectorAll('tr').forEach((tr,i)=>{
+    const name=tr.querySelector('.r-name').value.trim()||'—';
+    const pra=tr.querySelector('.r-pra').value.trim()||'—';
+    const status=tr.dataset.s||'pending';
+    const g={Strong:[],Moderate:[],Mild:[],Weak:[]}; let dsaYN='미분석';
+    if(status==='pos'){ dsaYN='있음'; safeJSON(tr.dataset.d,[]).forEach(m=>{ if(g[m.strength])g[m.strength].push(m.antibody); }); }
+    else if(status==='neg'){ dsaYN='없음'; }
+    else if(pra!=='—'){ const m=detectDSA(donor,pra); dsaYN=m.length>0?'있음':'없음'; m.forEach(x=>{ if(g[x.strength])g[x.strength].push(x.antibody); }); }
+    rows.push([i+1,name,pra,dsaYN,g.Strong.join(', ')||'—',g.Moderate.join(', ')||'—',g.Mild.join(', ')||'—',g.Weak.join(', ')||'—']);
+  });
+  const now=new Date();
+  const ymd=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const hm=`${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const meta=[[`저장일시: ${now.toLocaleString('ko-KR')}`],[`Donor  A:${$('hla-a').value||'—'}  B:${$('hla-b').value||'—'}  DR:${$('hla-dr').value||'—'}  DQ:${$('hla-dq').value||'—'}`],[]];
+  const csv='\uFEFF'+ [...meta,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})); a.download=`DSA_Result_${ymd}_${hm}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ================================================================
+   비밀번호
+================================================================ */
+async function tryLogin(){
+  const entered=$('pw-input').value.trim();
+  if(!entered){ showPwErr('비밀번호를 입력하세요'); return; }
+  try{
+    const stored=await DB.getPW();
+    if(entered===stored){
+      $('pw-gate').style.display='none'; $('app').style.display='flex';
+      if(!USE_SB) $('cfg-banner').style.display='block';
+      loadHist();
+    } else {
+      showPwErr('비밀번호가 틀렸습니다');
+      $('pw-input').classList.add('shake'); setTimeout(()=>$('pw-input').classList.remove('shake'),400);
+    }
+  } catch(e){ showPwErr('연결 오류: '+e.message); }
+}
+function showPwErr(msg){ $('pw-err').textContent=msg; setTimeout(()=>$('pw-err').textContent='',3000); }
+
+async function changePW(){
+  const cur=$('pw-cur').value.trim(), nw=$('pw-new').value.trim(), con=$('pw-con').value.trim();
+  if(!cur||!nw||!con){ setPwMsg('모든 항목을 입력하세요','err'); return; }
+  if(nw.length<2){ setPwMsg('새 비밀번호는 2자 이상','err'); return; }
+  if(nw!==con){ setPwMsg('새 비밀번호가 일치하지 않습니다','err'); return; }
+  try{
+    const stored=await DB.getPW();
+    if(cur!==stored){ setPwMsg('현재 비밀번호가 틀렸습니다','err'); return; }
+    await DB.setPW(nw);
+    ['pw-cur','pw-new','pw-con'].forEach(id=>$(id).value='');
+    setPwMsg('비밀번호가 변경되었습니다 ✅','ok');
+  } catch(e){ setPwMsg('저장 실패: '+e.message,'err'); }
+}
+function setPwMsg(txt,cls){ $('pw-chg-msg').textContent=txt; $('pw-chg-msg').className=cls; setTimeout(()=>{ $('pw-chg-msg').textContent=''; $('pw-chg-msg').className=''; },4000); }
+
+/* ================================================================
+   이벤트 바인딩
+================================================================ */
+$('pw-btn').addEventListener('click',tryLogin);
+$('pw-input').addEventListener('keydown',e=>{ if(e.key==='Enter') tryLogin(); });
+$('pw-chg-toggle').addEventListener('click',()=>{ const b=$('pw-chg-body'),open=b.style.display==='block'; b.style.display=open?'none':'block'; $('pw-arrow').textContent=open?'▼':'▲'; });
+$('btn-pw-save').addEventListener('click',changePW);
+['pw-cur','pw-new','pw-con'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') changePW(); }));
+$('btn-analyze').addEventListener('click',runAnalysis);
+$('btn-add').addEventListener('click',()=>addRow());
+$('btn-export').addEventListener('click',exportCSV);
+$('btn-reset').addEventListener('click',()=>{ if(confirm('현재 내용을 모두 초기화하시겠습니까?')) resetAll(); });
+$('btn-new').addEventListener('click',()=>{ if(confirm('현재 내용을 저장하고 새 분석을 시작하시겠습니까?')) doSave().then(()=>{ sessionId=null; resetAll(); }); });
+$('btn-history').addEventListener('click',openHist);
+$('btn-hp-close').addEventListener('click',closeHist);
+$('hist-overlay').addEventListener('click',closeHist);
+setInterval(()=>{ if($('hist-panel').classList.contains('open')) loadHist(); },30000);
+
+initRows(3);
+</script>
 </body>
 </html>
