@@ -150,7 +150,7 @@
             font-size: 14px;
             font-family: inherit;
             resize: vertical;
-            min-height: 60px;
+            min-height: 180px;
             transition: border-color 0.3s;
         }
 
@@ -329,6 +329,27 @@
             font-size: 0.75em;
             color: #c0392b;
             margin-left: 5px;
+        }
+
+        .team-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0 10px 0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+        .team-header-a {
+            background: #e8f4fd;
+            color: #1a5276;
+            border-left: 5px solid #2980b9;
+        }
+        .team-header-b {
+            background: #eafaf1;
+            color: #1e8449;
+            border-left: 5px solid #27ae60;
         }
 
         .excel-section {
@@ -895,6 +916,8 @@
             <div class="card">
                 <div class="card-title">매칭 수혜자 목록</div>
 
+                <!-- Team A -->
+                <div class="team-header team-header-a">[ Team A ]</div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -909,9 +932,30 @@
                                 <th>순서</th>
                             </tr>
                         </thead>
-                        <tbody id="recipientTable"></tbody>
+                        <tbody id="recipientTableA"></tbody>
                     </table>
                 </div>
+
+                <!-- Team B -->
+                <div class="team-header team-header-b" style="margin-top:25px;">[ Team B ]</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>성별</th>
+                                <th>키</th>
+                                <th>혈액형</th>
+                                <th>pTLC</th>
+                                <th>D/R</th>
+                                <th>DSA</th>
+                                <th>순서</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recipientTableB"></tbody>
+                    </table>
+                </div>
+
                 <div class="helper-text" style="margin-top: 10px; text-align: center;">
                     💡 빨간색 행의 DSA 항목 클릭 시 PRA 상세 확인
                 </div>
@@ -926,11 +970,11 @@
                     <textarea 
                         id="memoInput" 
                         class="memo-input" 
-                        placeholder="메모를 입력하세요 (최대 200자)"
-                        maxlength="200"
+                        placeholder="메모를 입력하세요 (최대 500자)"
+                        maxlength="500"
                         oninput="updateMemoCounter()"
                     ></textarea>
-                    <div class="memo-counter" id="memoCounter">0 / 200자</div>
+                    <div class="memo-counter" id="memoCounter">0 / 500자</div>
                 </div>
             </div>
         </div>
@@ -946,7 +990,7 @@
                 </button>
                 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handleFileUpload(event)">
             </div>
-            <p class="helper-text">Excel 형식: id, gender, height, bloodType, pra_antibodies (Strong/Moderate/Mild/Weak로 구분)</p>
+            <p class="helper-text">Excel Sheet1 = Team A, Sheet2 = Team B / 컬럼: id, gender, height, bloodType, pra_antibodies</p>
             <div class="success-message" id="successMessage"></div>
         </div>
 
@@ -1145,9 +1189,13 @@
                 alert('비밀번호 변경에 실패했습니다.');
             }
         }
+        let recipients = [];
+        let recipientsA = [];
+        let recipientsB = [];
         let dsaPositiveRecipients = [];
-        let manualOrder = null; // 수동 순서 오버라이드 (dbId 배열)
-        let lastDonorKey = ''; // 기증자 정보 변경 감지용
+        let manualOrderA = null;
+        let manualOrderB = null;
+        let lastDonorKey = '';
 
         // 기증자 정보 키 생성
         function getDonorKey() {
@@ -1168,12 +1216,8 @@
                 recipients = data.map(r => {
                     const rawPra = r.pra_antibodies ? r.pra_antibodies : '';
                     const cleanPra = rawPra
-                        .replace(/\r\n/g, '\n')
-                        .replace(/\r/g, '\n')
-                        .split('\n')
-                        .map(line => line.trim())
-                        .filter(line => line !== '')
-                        .join('\n');
+                        .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                        .split('\n').map(l => l.trim()).filter(l => l !== '').join('\n');
                     return {
                         id: r.recipient_name ? r.recipient_name.trim() : '',
                         gender: r.gender ? r.gender.trim() : '',
@@ -1181,9 +1225,12 @@
                         bloodType: r.bloodType ? r.bloodType.trim() : '',
                         praAntibodies: cleanPra,
                         dbId: r.id,
-                        orderIndex: r.order_index
+                        orderIndex: r.order_index,
+                        team: r.team || 'A'
                     };
                 });
+                recipientsA = recipients.filter(r => r.team === 'A');
+                recipientsB = recipients.filter(r => r.team === 'B');
                 renderRecipients();
             } catch (error) {
                 console.error('수혜자 목록 로드 실패:', error);
@@ -1194,12 +1241,7 @@
         // Supabase에 수혜자 목록 저장 (전체 교체)
         async function saveRecipientsToServer(newRecipients) {
             try {
-                // 기존 전체 삭제
-                await sbFetch('recipients?id=neq.00000000-0000-0000-0000-000000000000', {
-                    method: 'DELETE'
-                });
-
-                // 새로 삽입
+                await sbFetch('recipients?id=neq.00000000-0000-0000-0000-000000000000', { method: 'DELETE' });
                 if (newRecipients.length > 0) {
                     const rows = newRecipients.map((r, index) => ({
                         recipient_name: r.id ? r.id.trim() : '',
@@ -1207,14 +1249,11 @@
                         height: r.height,
                         bloodType: r.bloodType ? r.bloodType.trim() : '',
                         pra_antibodies: r.praAntibodies ? r.praAntibodies.trim() : '',
-                        order_index: index + 1
+                        order_index: index + 1,
+                        team: r.team || 'A'
                     }));
-                    await sbFetch('recipients', {
-                        method: 'POST',
-                        body: JSON.stringify(rows)
-                    });
+                    await sbFetch('recipients', { method: 'POST', body: JSON.stringify(rows) });
                 }
-
                 await loadRecipients();
                 showSuccessMessage('수혜자 목록이 저장되었습니다.');
             } catch (error) {
@@ -1357,9 +1396,6 @@
         }
 
         function renderRecipients() {
-            const tableBody = document.getElementById("recipientTable");
-            tableBody.innerHTML = "";
-
             const donorGender = document.querySelector("input[name='donorGender']:checked").value;
             const donorHeight = Number(document.getElementById("donorHeight").value);
             const donorBloodType = document.getElementById("donorBloodType").value;
@@ -1372,86 +1408,95 @@
             const currentDonorKey = getDonorKey();
             if (currentDonorKey !== lastDonorKey) {
                 lastDonorKey = currentDonorKey;
-                manualOrder = null; // 자동 정렬 모드로 복귀
+                manualOrderA = null;
+                manualOrderB = null;
             }
 
             dsaPositiveRecipients = [];
 
-            const recipientsWithCompatibility = recipients.map((recipient, originalIndex) => {
-                const recipientTLC = calculateTLC(recipient.height, recipient.gender);
-                const ratio = donorTLC > 0 && recipientTLC > 0 ? donorTLC / recipientTLC : 0;
-                const bloodOk = isBloodCompatible(donorBloodType, recipient.bloodType);
-                const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
-                const hasDSA = dsaMatches.length > 0;
-
-                if (hasDSA) {
-                    dsaPositiveRecipients.push({ recipient, matches: dsaMatches, recipientTLC, ratio });
-                }
-
-                return { ...recipient, recipientTLC, ratio, bloodOk, hasDSA, dsaMatches, originalIndex };
-            });
-
-            let ordered;
-            if (manualOrder) {
-                // 수동 순서 적용
-                const map = new Map(recipientsWithCompatibility.map(r => [r.dbId, r]));
-                ordered = manualOrder.map(id => map.get(id)).filter(Boolean);
-                // manualOrder에 없는 항목은 뒤에 추가
-                recipientsWithCompatibility.forEach(r => {
-                    if (!manualOrder.includes(r.dbId)) ordered.push(r);
+            function processTeam(teamRecipients) {
+                return teamRecipients.map((recipient, originalIndex) => {
+                    const recipientTLC = calculateTLC(recipient.height, recipient.gender);
+                    const ratio = donorTLC > 0 && recipientTLC > 0 ? donorTLC / recipientTLC : 0;
+                    const bloodOk = isBloodCompatible(donorBloodType, recipient.bloodType);
+                    const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
+                    const hasDSA = dsaMatches.length > 0;
+                    if (hasDSA) dsaPositiveRecipients.push({ recipient, matches: dsaMatches, recipientTLC, ratio });
+                    return { ...recipient, recipientTLC, ratio, bloodOk, hasDSA, dsaMatches, originalIndex };
                 });
-            } else {
-                // 자동 그룹 정렬: 혈액형맞음+DSA빨강 → 혈액형맞음초록 → 혈액형불일치회색(DSA 있어도)
-                const dsaGroup = recipientsWithCompatibility.filter(r => r.bloodOk && r.hasDSA);
-                const compatGroup = recipientsWithCompatibility.filter(r => r.bloodOk && !r.hasDSA);
-                const incompatGroup = recipientsWithCompatibility.filter(r => !r.bloodOk);
-                ordered = [...dsaGroup, ...compatGroup, ...incompatGroup];
             }
 
-            ordered.forEach(recipient => {
-                const row = createRecipientRow(recipient, recipient.bloodOk, recipient.hasDSA, ordered);
-                tableBody.appendChild(row);
-            });
-            window._currentOrdered = ordered;
-
-            // SortableJS 초기화 (드래그앤드롭)
-            if (window._sortable) window._sortable.destroy();
-            window._sortable = new Sortable(tableBody, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                handle: '.drag-handle',
-                forceFallback: true,
-                fallbackTolerance: 5,
-                delay: 100,
-                delayOnTouchOnly: true,
-                onEnd: function(evt) {
-                    if (evt.oldIndex === evt.newIndex) return;
-                    const newOrdered = [...window._currentOrdered];
-                    const moved = newOrdered.splice(evt.oldIndex, 1)[0];
-                    newOrdered.splice(evt.newIndex, 0, moved);
-                    manualOrder = newOrdered.map(r => r.dbId);
-                    window._currentOrdered = newOrdered;
-                    renderRecipients();
+            function getOrdered(withCompat, manualOrder) {
+                if (manualOrder) {
+                    const map = new Map(withCompat.map(r => [r.dbId, r]));
+                    const ordered = manualOrder.map(id => map.get(id)).filter(Boolean);
+                    withCompat.forEach(r => { if (!manualOrder.includes(r.dbId)) ordered.push(r); });
+                    return ordered;
                 }
-            });
+                const compatGroup = withCompat.filter(r => r.bloodOk);
+                const incompatGroup = withCompat.filter(r => !r.bloodOk);
+                return [...compatGroup, ...incompatGroup];
+            }
+
+            function renderTeamTable(tableId, teamRecipients, manualOrder, sortableKey, currentOrderedKey) {
+                const tableBody = document.getElementById(tableId);
+                tableBody.innerHTML = "";
+                const withCompat = processTeam(teamRecipients);
+                const ordered = getOrdered(withCompat, manualOrder);
+
+                ordered.forEach(recipient => {
+                    const row = createRecipientRow(recipient, recipient.bloodOk, recipient.hasDSA, ordered, tableId);
+                    tableBody.appendChild(row);
+                });
+                window[currentOrderedKey] = ordered;
+
+                if (window[sortableKey]) window[sortableKey].destroy();
+                window[sortableKey] = new Sortable(tableBody, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    handle: '.drag-handle',
+                    forceFallback: true,
+                    fallbackTolerance: 5,
+                    delay: 100,
+                    delayOnTouchOnly: true,
+                    onEnd: function(evt) {
+                        if (evt.oldIndex === evt.newIndex) return;
+                        const newOrdered = [...window[currentOrderedKey]];
+                        const moved = newOrdered.splice(evt.oldIndex, 1)[0];
+                        newOrdered.splice(evt.newIndex, 0, moved);
+                        if (tableId === 'recipientTableA') manualOrderA = newOrdered.map(r => r.dbId);
+                        else manualOrderB = newOrdered.map(r => r.dbId);
+                        window[currentOrderedKey] = newOrdered;
+                        renderRecipients();
+                    }
+                });
+            }
+
+            renderTeamTable('recipientTableA', recipientsA, manualOrderA, '_sortableA', '_currentOrderedA');
+            renderTeamTable('recipientTableB', recipientsB, manualOrderB, '_sortableB', '_currentOrderedB');
         }
 
-        // 순서 조정: manualOrder 배열로 관리
-        function moveRecipient(dbId, direction, currentOrdered) {
-            // 현재 표시 순서 기준으로 manualOrder 초기화
-            if (!manualOrder) {
-                manualOrder = currentOrdered.map(r => r.dbId);
+        // 순서 조정 (팀별)
+        function moveRecipient(dbId, direction, currentOrdered, team) {
+            if (team === 'A') {
+                if (!manualOrderA) manualOrderA = currentOrdered.map(r => r.dbId);
+                const idx = manualOrderA.indexOf(dbId);
+                if (idx === -1) return;
+                const swapIdx = idx + direction;
+                if (swapIdx < 0 || swapIdx >= manualOrderA.length) return;
+                [manualOrderA[idx], manualOrderA[swapIdx]] = [manualOrderA[swapIdx], manualOrderA[idx]];
+            } else {
+                if (!manualOrderB) manualOrderB = currentOrdered.map(r => r.dbId);
+                const idx = manualOrderB.indexOf(dbId);
+                if (idx === -1) return;
+                const swapIdx = idx + direction;
+                if (swapIdx < 0 || swapIdx >= manualOrderB.length) return;
+                [manualOrderB[idx], manualOrderB[swapIdx]] = [manualOrderB[swapIdx], manualOrderB[idx]];
             }
-            const idx = manualOrder.indexOf(dbId);
-            if (idx === -1) return;
-            const swapIdx = idx + direction;
-            if (swapIdx < 0 || swapIdx >= manualOrder.length) return;
-            [manualOrder[idx], manualOrder[swapIdx]] = [manualOrder[swapIdx], manualOrder[idx]];
             renderRecipients();
         }
 
-        function createRecipientRow(recipient, isBloodCompatible, hasDSA, ordered) {
+        function createRecipientRow(recipient, isBloodCompatible, hasDSA, ordered, tableId) {
             const row = document.createElement("tr");
             
             if (!isBloodCompatible) {
@@ -1462,12 +1507,8 @@
                 row.className = "blood-compatible-row";
             }
 
-            // 순서 버튼 - ordered 배열 기준
-            const orderedIds = ordered ? ordered.map(r => r.dbId) : [];
-            const currentIdx = orderedIds.indexOf(recipient.dbId);
-            const upDisabled = currentIdx <= 0 ? 'disabled' : '';
-            const downDisabled = currentIdx >= orderedIds.length - 1 ? 'disabled' : '';
-            const orderedJson = JSON.stringify(orderedIds).replace(/"/g, '&quot;');
+            const team = tableId === 'recipientTableA' ? 'A' : 'B';
+            const currentOrderedKey = team === 'A' ? '_currentOrderedA' : '_currentOrderedB';
             const orderCell = `
                 <td class="order-cell">
                     <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
@@ -1755,28 +1796,24 @@
 
         function downloadTemplate() {
             const headerRow = ["id", "gender", "height", "bloodType", "pra_antibodies"];
-            const dataRows = recipients.map(r => [r.id, r.gender, r.height, r.bloodType, r.praAntibodies || '']);
-            
-            if (dataRows.length === 0) {
-                dataRows.push(["환자1", "남자", 170, "A", "Moderate A11, Cw18\nMild Cw15\nWeak Cw17"]);
-                dataRows.push(["환자2", "여자", 160, "O", "Strong DR11\nModerate DR13\nMild DR8\nWeak DQ2"]);
-                dataRows.push(["환자3", "남자", 175, "B", ""]);
+            const colWidths = [{ wch:15 },{ wch:10 },{ wch:10 },{ wch:10 },{ wch:35 }];
+
+            function makeSheet(teamRecipients, fallback) {
+                const dataRows = teamRecipients.length > 0
+                    ? teamRecipients.map(r => [r.id, r.gender, r.height, r.bloodType, r.praAntibodies || ''])
+                    : fallback;
+                const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+                ws['!cols'] = colWidths;
+                return ws;
             }
 
-            const rows = [headerRow, ...dataRows];
-            const worksheet = XLSX.utils.aoa_to_sheet(rows);
-            
-            worksheet['!cols'] = [
-                { wch: 15 },
-                { wch: 10 },
-                { wch: 10 },
-                { wch: 10 },
-                { wch: 35 }
-            ];
+            const fallbackA = [["환자A1","남자",170,"A","Moderate A11\nWeak Cw17"]];
+            const fallbackB = [["환자B1","여자",160,"O","Strong DR11\nWeak DQ2"]];
 
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "수혜자목록");
-            XLSX.writeFile(workbook, "수혜자_목록_템플릿_PRA포함.xlsx");
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, makeSheet(recipientsA, fallbackA), 'Team A');
+            XLSX.utils.book_append_sheet(wb, makeSheet(recipientsB, fallbackB), 'Team B');
+            XLSX.writeFile(wb, '수혜자_목록.xlsx');
         }
 
         function handleFileUpload(event) {
@@ -1787,34 +1824,34 @@
             reader.onload = async (e) => {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: "array" });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-                const parsed = rows
-                    .map((row) => {
-                        // PRA 텍스트 정리: \r 제거 + 연속 빈 줄 제거 + 앞뒤 공백 제거
-                        const rawPra = (row.pra_antibodies || row.PRA || row["PRA"] || row["항체"] || "").toString();
+                function parseSheet(sheetName) {
+                    if (!sheetName) return [];
+                    const ws = workbook.Sheets[sheetName];
+                    if (!ws) return [];
+                    const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+                    return rows.map(row => {
+                        const rawPra = (row.pra_antibodies || row.PRA || "").toString();
                         const cleanPra = rawPra
-                            .replace(/\r\n/g, '\n')   // 윈도우 줄바꿈 통일
-                            .replace(/\r/g, '\n')      // 맥 구형 줄바꿈 통일
-                            .split('\n')
-                            .map(line => line.trim())  // 각 줄 앞뒤 공백 제거
-                            .filter(line => line !== '') // 빈 줄 제거
-                            .join('\n');               // 다시 합치기
-
+                            .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                            .split('\n').map(l => l.trim()).filter(l => l !== '').join('\n');
                         return {
-                            id: (row.id || row.ID || row["수혜자 ID"] || "").toString().trim(),
-                            gender: (row.gender || row.Gender || row["성별"] || "").toString().trim(),
-                            height: Number(row.height || row.Height || row["키"] || 0),
-                            bloodType: (row.bloodType || row.BloodType || row["혈액형"] || "").toString().trim(),
+                            id: (row.id || row.ID || "").toString().trim(),
+                            gender: (row.gender || row.Gender || "").toString().trim(),
+                            height: Number(row.height || row.Height || 0),
+                            bloodType: (row.bloodType || row.BloodType || "").toString().trim(),
                             praAntibodies: cleanPra
                         };
-                    })
-                    .filter((row) => row.id && row.gender && row.height && row.bloodType);
+                    }).filter(r => r.id && r.gender && r.height && r.bloodType);
+                }
 
-                if (parsed.length > 0) {
-                    await saveRecipientsToServer(parsed);
+                // Sheet1 = Team A, Sheet2 = Team B
+                const parsedA = parseSheet(workbook.SheetNames[0]).map(r => ({ ...r, team: 'A' }));
+                const parsedB = parseSheet(workbook.SheetNames[1]).map(r => ({ ...r, team: 'B' }));
+                const allParsed = [...parsedA, ...parsedB];
+
+                if (allParsed.length > 0) {
+                    await saveRecipientsToServer(allParsed);
                 } else {
                     showSuccessMessage("데이터를 찾지 못했습니다. 템플릿 형식을 확인해주세요.");
                 }
@@ -1873,56 +1910,55 @@
             }, 800);
         }
 
-        // 결과 텍스트 다운로드
         function downloadResultText() {
-            if (!window._currentOrdered || window._currentOrdered.length === 0) {
+            if (!window._currentOrderedA && !window._currentOrderedB) {
                 alert('목록이 없습니다. 기증자 정보를 먼저 입력해주세요.');
                 return;
             }
 
             const donorGender = document.querySelector("input[name='donorGender']:checked").value;
             const donorHeight = Number(document.getElementById("donorHeight").value);
-            const donorHLA = getDonorHLATyping();
-            const donorTLC = calculateTLC(donorHeight, donorGender);
-
-            const lines = window._currentOrdered
-                .filter(recipient => recipient.bloodOk)  // 혈액형 호환된 경우만
-                .map(recipient => {
-                const ratio = formatNumber(recipient.ratio, 2);
-                const dsaMatches = detectDSA(donorHLA, recipient.praAntibodies);
-
-                if (dsaMatches.length === 0) {
-                    return `${recipient.id}  ${ratio}`;
-                }
-
-                // DSA 강도별 그룹화
-                const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
-                dsaMatches.forEach(m => {
-                    if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody);
-                });
-
-                const dsaParts = ['Strong', 'Moderate', 'Mild', 'Weak']
-                    .filter(s => byStrength[s].length > 0)
-                    .map(s => `${s} ${byStrength[s].join(', ')}`);
-
-                return `${recipient.id}  ${ratio}  ${dsaParts.join(' / ')}`;
-            });
-
-            // 헤더 추가
             const donorBloodType = document.getElementById("donorBloodType").value;
+            const donorTLC = calculateTLC(donorHeight, donorGender);
+            const donorHLA = getDonorHLATyping();
             const now = new Date().toLocaleDateString('ko-KR');
+
+            function buildLines(ordered) {
+                return (ordered || [])
+                    .filter(r => r.bloodOk)
+                    .map(r => {
+                        const ratio = formatNumber(r.ratio, 2);
+                        const dsaMatches = detectDSA(donorHLA, r.praAntibodies);
+                        if (dsaMatches.length === 0) return `${r.id}  ${ratio}`;
+                        const byStrength = { Strong: [], Moderate: [], Mild: [], Weak: [] };
+                        dsaMatches.forEach(m => { if (byStrength[m.strength]) byStrength[m.strength].push(m.antibody); });
+                        const dsaParts = ['Strong','Moderate','Mild','Weak']
+                            .filter(s => byStrength[s].length > 0)
+                            .map(s => `${s} ${byStrength[s].join(', ')}`);
+                        return `${r.id}  ${ratio}  ${dsaParts.join(' / ')}`;
+                    });
+            }
+
             const header = [
                 `[폐이식 TLC 계산기 결과]`,
                 `생성일: ${now}`,
                 `기증자: ${donorGender} / ${donorHeight}cm / ${donorBloodType}형 / pTLC ${formatNumber(donorTLC, 1)} mL`,
                 `─────────────────────────`,
-                `이름  D/R  DSA`,
-                `─────────────────────────`,
             ].join('\n');
 
-            const content = header + '\n' + lines.join('\n');
+            const teamALines = buildLines(window._currentOrderedA);
+            const teamBLines = buildLines(window._currentOrderedB);
 
-            // 다운로드
+            const content = [
+                header,
+                `\n[Team A]  이름  D/R  DSA`,
+                `─────────────────────────`,
+                teamALines.join('\n'),
+                `\n[Team B]  이름  D/R  DSA`,
+                `─────────────────────────`,
+                teamBLines.join('\n'),
+            ].join('\n');
+
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
