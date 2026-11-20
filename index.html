@@ -851,6 +851,20 @@
             <p class="subtitle">Lung Transplant TLC Calculator with DSA Detection</p>
         </div>
 
+        <!-- 이력 보기 중 배너 -->
+        <div id="historyBanner" style="display:none;position:sticky;top:8px;z-index:500;background:#fff3cd;border:2px solid #ffc107;border-radius:10px;padding:12px 20px;margin-bottom:15px;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:1.3em;">📂</span>
+                <div>
+                    <strong style="color:#856404;" id="historyBannerName">이력 보기 중</strong>
+                    <div style="font-size:12px;color:#856404;" id="historyBannerDate"></div>
+                </div>
+            </div>
+            <button onclick="returnToLive()" style="background:#4472c4;color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;">
+                🔄 현재 목록으로 돌아가기
+            </button>
+        </div>
+
         <div class="main-content">
             <div class="card">
                 <div class="card-title">기증자 정보 입력</div>
@@ -1030,17 +1044,6 @@
                     <button class="btn btn-primary" onclick="changePassword()" style="width:100%;">변경</button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- 이력 상세보기 모달 -->
-    <div id="snapshotModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#4472c4;">
-                <span id="snapshotModalTitle">📋 이력 상세보기</span>
-                <button class="close-btn" onclick="closeSnapshotModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="snapshotModalBody"></div>
         </div>
     </div>
 
@@ -1787,11 +1790,9 @@
             const modal1 = document.getElementById('dsaModal');
             const modal2 = document.getElementById('dsaDetailModal');
             const modal3 = document.getElementById('praModal');
-            const modal4 = document.getElementById('snapshotModal');
             if (event.target === modal1) closeDSAModal();
             if (event.target === modal2) closeDSADetailModal();
             if (event.target === modal3) closePraModal();
-            if (event.target === modal4) closeSnapshotModal();
         }
 
         function downloadTemplate() {
@@ -1893,8 +1894,8 @@
             const memoInput = document.getElementById('memoInput');
             const memoCounter = document.getElementById('memoCounter');
             const length = memoInput.value.length;
-            const maxLength = 200;
-            
+            const maxLength = 500;
+
             memoCounter.textContent = `${length} / ${maxLength}자`;
             
             if (length >= maxLength) {
@@ -1985,9 +1986,19 @@
             if (!name) { alert('이력 이름을 입력해주세요.'); return; }
 
             const data = {
+                donor: {
+                    gender: document.querySelector("input[name='donorGender']:checked").value,
+                    height: document.getElementById("donorHeight").value,
+                    bloodType: document.getElementById("donorBloodType").value,
+                    hlaA: document.getElementById("donorHLA_A").value,
+                    hlaB: document.getElementById("donorHLA_B").value,
+                    hlaDR: document.getElementById("donorHLA_DR").value,
+                    hlaDQ: document.getElementById("donorHLA_DQ").value
+                },
                 recipients: recipients.map(r => ({
                     id: r.id, gender: r.gender, height: r.height,
-                    bloodType: r.bloodType, praAntibodies: r.praAntibodies
+                    bloodType: r.bloodType, praAntibodies: r.praAntibodies,
+                    team: r.team || 'A'
                 })),
                 savedAt: new Date().toISOString()
             };
@@ -2035,8 +2046,8 @@
                         <div style="color:#999;font-size:12px;margin-top:3px;">${date} · 수혜자 ${count}명</div>
                     </div>
                     <div style="display:flex;gap:6px;flex-shrink:0;">
-                        <button onclick="viewSnapshot('${s.id}')" 
-                            style="padding:5px 10px;background:#4472c4;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">👁 보기</button>
+                        <button onclick="loadSnapshot('${s.id}')"
+                            style="padding:5px 10px;background:#4472c4;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">📂 불러오기</button>
                         <button onclick="toggleRenameSnapshot('${s.id}')" id="renameBtn_${s.id}"
                             style="padding:5px 10px;background:#f39c12;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;">✏️ 이름</button>
                         <button onclick="deleteSnapshot('${s.id}')"
@@ -2086,45 +2097,71 @@
             }
         }
 
-        function viewSnapshot(id) {
+        function loadSnapshot(id) {
             const s = snapshots.find(s => s.id === id);
             if (!s) return;
+
+            // 기증자 정보 복원
+            const donor = s.data?.donor;
+            if (donor) {
+                const genderRadio = document.querySelector(`input[name='donorGender'][value='${donor.gender}']`);
+                if (genderRadio) genderRadio.checked = true;
+                document.getElementById("donorHeight").value = donor.height || '';
+                document.getElementById("donorBloodType").value = donor.bloodType || 'A';
+                document.getElementById("donorHLA_A").value = donor.hlaA || '';
+                document.getElementById("donorHLA_B").value = donor.hlaB || '';
+                document.getElementById("donorHLA_DR").value = donor.hlaDR || '';
+                document.getElementById("donorHLA_DQ").value = donor.hlaDQ || '';
+            }
+
+            // 수혜자 목록 복원 (team 필드 포함)
+            const restoredRecipients = (s.data?.recipients || []).map((r, i) => ({
+                id: r.id,
+                gender: r.gender,
+                height: r.height,
+                bloodType: r.bloodType,
+                praAntibodies: r.praAntibodies || '',
+                team: r.team || 'A',
+                dbId: 'snap_' + i,
+                orderIndex: i + 1
+            }));
+            recipients = restoredRecipients;
+            recipientsA = recipients.filter(r => r.team === 'A');
+            recipientsB = recipients.filter(r => r.team === 'B');
+
+            // 수동 순서 초기화 (이력 불러오면 원본 순서 사용)
+            manualOrderA = null;
+            manualOrderB = null;
+            lastDonorKey = '';
+
+            // 화면 렌더링
+            renderRecipients();
+
+            // 이력 보기 중 배너 표시
+            const banner = document.getElementById('historyBanner');
+            banner.style.display = 'flex';
+            document.getElementById('historyBannerName').textContent = `📂 이력 보기 중: ${s.name}`;
             const date = new Date(s.created_at).toLocaleString('ko-KR');
-            document.getElementById('snapshotModalTitle').textContent = `📋 ${s.name}`;
+            document.getElementById('historyBannerDate').textContent = `저장일시: ${date}`;
 
-            const rows = (s.data?.recipients || []).map((r, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td>${r.id}</td>
-                    <td>${r.gender}</td>
-                    <td>${r.height}</td>
-                    <td>${r.bloodType}</td>
-                    <td style="font-size:11px;text-align:left;max-width:200px;white-space:pre-wrap;">${r.praAntibodies || '-'}</td>
-                </tr>`).join('');
+            // 상단으로 스크롤
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            document.getElementById('snapshotModalBody').innerHTML = `
-                <div style="margin-bottom:15px;padding:12px;background:#e8f4fd;border-radius:8px;color:#2c3e50;">
-                    <strong>저장일시:</strong> ${date} &nbsp;|&nbsp; <strong>수혜자:</strong> ${s.data?.recipients?.length || 0}명
-                </div>
-                <div style="overflow-x:auto;">
-                <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                    <thead><tr style="background:#4472c4;color:white;">
-                        <th style="padding:8px;">#</th>
-                        <th style="padding:8px;">수혜자 ID</th>
-                        <th style="padding:8px;">성별</th>
-                        <th style="padding:8px;">키</th>
-                        <th style="padding:8px;">혈액형</th>
-                        <th style="padding:8px;">PRA</th>
-                    </tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-                </div>`;
-            document.getElementById('snapshotModal').style.display = 'block';
+            showSuccessMessage(`이력 "${s.name}" 불러왔습니다.`);
         }
 
-        function closeSnapshotModal() {
-            document.getElementById('snapshotModal').style.display = 'none';
+        async function returnToLive() {
+            // 배너 숨기기
+            document.getElementById('historyBanner').style.display = 'none';
+            // 수동 순서 초기화
+            manualOrderA = null;
+            manualOrderB = null;
+            lastDonorKey = '';
+            // Supabase에서 실제 데이터 다시 로드
+            await loadRecipients();
+            showSuccessMessage('현재 목록으로 돌아왔습니다.');
         }
+
         // ===== 이력관리 끝 =====
 
         // Supabase에 메모 저장
